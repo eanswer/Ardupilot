@@ -406,9 +406,11 @@ void Copter::ten_hz_logging_loop()
     if (should_log(MASK_LOG_RCOUT)) {
         DataFlash.Log_Write_RCOUT();
     }
-    if (should_log(MASK_LOG_NTUN) && (mode_requires_GPS(control_mode) || landing_with_GPS())) {
+    // changed
+    /*if (should_log(MASK_LOG_NTUN) && (mode_requires_GPS(control_mode) || landing_with_GPS())) {
         Log_Write_Nav_Tuning();
-    }
+    }*/
+    Log_Write_Nav_Tuning();
     if (should_log(MASK_LOG_IMU) || should_log(MASK_LOG_IMU_FAST) || should_log(MASK_LOG_IMU_RAW)) {
         DataFlash.Log_Write_Vibration(ins);
     }
@@ -639,9 +641,11 @@ void Copter::update_altitude()
     read_barometer();
 
     // write altitude info to dataflash logs
+    // changed
     if (should_log(MASK_LOG_CTUN)) {
         Log_Write_Control_Tuning();
     }
+    // Log_Write_Control_Tuning();
 }
 
 AP_HAL_MAIN_CALLBACKS(&copter);

@@ -150,6 +150,76 @@ public:
     void setup() override;
     void loop() override;
 
+    int16_t get_channel_roll_control_in() const {
+        return channel_roll->get_control_in();
+    }
+    int16_t get_channel_pitch_control_in() const {
+        return channel_pitch->get_control_in();
+    }
+    int16_t get_channel_throttle_control_in() const {
+        return channel_throttle->get_control_in();
+    }
+    int16_t get_channel_yaw_control_in() const {
+        return channel_yaw->get_control_in();
+    }
+    // get EKF position
+    /*const Vector3f get_EKF_NED_position() const {
+        Vector2f posNE;
+        float posD;
+        ahrs.get_NavEKF2().getPosNE(0, posNE);
+        ahrs.get_NavEKF2().getPosD(0, posD);
+        Vector3f posNED;
+        posNED.x = posNE.x;
+        posNED.y = posNE.y;
+        posNED.z = posD;
+        return posNED;
+    }*/
+    // get altitude
+    float get_altitude() const {
+        return inertial_nav.get_altitude() / 100.0f;
+    }
+    // All angles and angular rates are in radians.
+    float get_roll() const {
+        return ahrs.roll;
+    }
+    float get_pitch() const {
+        return ahrs.pitch;
+    }
+    float get_yaw() const {
+        return ahrs.yaw;
+    }
+    float get_roll_rate() const {
+        return ahrs.get_gyro().x;
+    }
+    float get_pitch_rate() const {
+        return ahrs.get_gyro().y;
+    }
+    float get_yaw_rate() const {
+        return ahrs.get_gyro().z;
+    }
+    // Battery voltage.
+    float get_battery_voltage() const {
+        return battery.voltage();
+    }
+    // Return north-east-down velocity in meter/second.
+    const Vector3f get_ned_velocity() const {
+        const Vector3f& velocity_neu = inertial_nav.get_velocity() / 100.0f;
+        // Convert neu to ned.
+        return Vector3f(velocity_neu.x, velocity_neu.y, -velocity_neu.z);
+    }
+    // frame_conversion_ef_to_bf - converts earth frame vector to body frame vector
+    const Vector3f frame_conversion_ef_to_bf(const Vector3f& ef_vector) const {
+        // convert earth frame rates to body frame rates
+        return Vector3f(ef_vector.x - ahrs.sin_pitch() * ef_vector.z,
+            ahrs.cos_roll()  * ef_vector.y + ahrs.sin_roll() * ahrs.cos_pitch() * ef_vector.z,
+            -ahrs.sin_roll() * ef_vector.y + ahrs.cos_pitch() * ahrs.cos_roll() * ef_vector.z);
+    }
+    // Controller Infomation
+    float real_x, real_y, real_z, real_roll, real_pitch, real_yaw, real_vx, real_vy, real_vz, real_rollspeed, real_pitchspeed, real_yawspeed;
+    float desired_z;
+    float pwm_out[4], desired_thrust[4];
+    float real_battery;
+
 private:
     // key aircraft parameters passed to multiple libraries
     AP_Vehicle::MultiCopter aparm;
@@ -339,6 +409,8 @@ private:
     // Motor Output
 #if FRAME_CONFIG == HELI_FRAME
  #define MOTOR_CLASS AP_MotorsHeli
+#elif FRAME_CONFIG == HYBRID_FRAME
+ #define MOTOR_CLASS AP_MotorsHybrid
 #else
  #define MOTOR_CLASS AP_MotorsMulticopter
 #endif

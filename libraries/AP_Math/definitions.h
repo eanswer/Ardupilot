@@ -17,6 +17,9 @@
 #define M_GOLDEN  1.6180339f
 
 #define M_2PI         (M_PI * 2)
+#ifndef PI
+	#define PI M_PI
+#endif
 
 // MATH_CHECK_INDEXES modifies some objects (e.g. SoloGimbalEKF) to
 // include more debug information.  It is also used by some functions

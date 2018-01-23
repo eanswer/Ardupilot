@@ -576,6 +576,8 @@ const char* Copter::get_frame_string()
             return "COAX";
         case AP_Motors::MOTOR_FRAME_TAILSITTER:
             return "TAILSITTER";
+        //case AP_Motors::MOTOR_FRAME_HYBRID:
+        //    return "HYBRID";
         case AP_Motors::MOTOR_FRAME_UNDEFINED:
         default:
             return "UNKNOWN";
@@ -587,8 +589,9 @@ const char* Copter::get_frame_string()
  */
 void Copter::allocate_motors(void)
 {
-    switch ((AP_Motors::motor_frame_class)g2.frame_class.get()) {
+    /*switch ((AP_Motors::motor_frame_class)g2.frame_class.get()) {
 #if FRAME_CONFIG != HELI_FRAME
+        case AP_Motors::
         case AP_Motors::MOTOR_FRAME_QUAD:
         case AP_Motors::MOTOR_FRAME_HEXA:
         case AP_Motors::MOTOR_FRAME_Y6:
@@ -629,7 +632,18 @@ void Copter::allocate_motors(void)
             AP_Param::set_frame_type_flags(AP_PARAM_FRAME_HELI);
             break;            
 #endif
-    }
+    }*/
+#if FRAME_CONFIG == HELI_FRAME  // helicopter constructor requires more arguments
+    motors = new AP_MotorsHeli_Single(MAIN_LOOP_RATE);
+    motors_var_info = AP_MotorsHeli_Single::var_info;
+    AP_Param::set_frame_type_flags(AP_PARAM_FRAME_HELI);
+#elif FRAME_CONFIG == HYBRID_FRAME
+    motors = new AP_MotorsHybrid(MAIN_LOOP_RATE, AP_MOTORS_SPEED_DEFAULT, *this),
+    motors_var_info = AP_MotorsHybrid::var_info;
+#else
+    motors = new AP_MotorsMatrix(MAIN_LOOP_RATE);
+    motors_var_info = AP_MotorsMatrix::var_info;
+#endif
     if (motors == nullptr) {
         AP_HAL::panic("Unable to allocate FRAME_CLASS=%u", (unsigned)g2.frame_class.get());
     }

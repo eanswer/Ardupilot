@@ -250,7 +250,7 @@ void Copter::Log_Write_Optflow()
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
  #endif     // OPTFLOW == ENABLED
 }
-
+/*
 struct PACKED log_Nav_Tuning {
     LOG_PACKET_HEADER;
     uint64_t time_us;
@@ -291,6 +291,7 @@ void Copter::Log_Write_Nav_Tuning()
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
+
 
 struct PACKED log_Control_Tuning {
     LOG_PACKET_HEADER;
@@ -333,6 +334,94 @@ void Copter::Log_Write_Control_Tuning()
         desired_rangefinder_alt : (int16_t)target_rangefinder_alt,
         rangefinder_alt     : rangefinder_state.alt_cm,
         terr_alt            : terr_alt,
+        target_climb_rate   : (int16_t)pos_control->get_vel_target_z(),
+        climb_rate          : climb_rate
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}*/
+
+struct PACKED log_Nav_Tuning {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float    desired_pos_x; // z
+    float    desired_pos_y;  // roll
+    float    pos_x; // pitch
+    float    pos_y; // yaw
+    float    desired_vel_x; // vx
+    float    desired_vel_y; // vy
+    float    vel_x; // vz
+    float    vel_y; // rollspeed
+    float    desired_accel_x; // pitchspeed
+    float    desired_accel_y; // yawspeed
+};
+
+// Write an Nav Tuning packet
+void Copter::Log_Write_Nav_Tuning()
+{
+    const Vector3f &pos_target = pos_control->get_pos_target();
+    const Vector3f &vel_target = pos_control->get_vel_target();
+    const Vector3f &accel_target = pos_control->get_accel_target();
+    const Vector3f &position = inertial_nav.get_position();
+    const Vector3f &velocity = inertial_nav.get_velocity();
+
+    struct log_Nav_Tuning pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_NAV_TUNING_MSG),
+        time_us         : AP_HAL::micros64(),
+        desired_pos_x   : real_z,
+        desired_pos_y   : real_roll,
+        pos_x           : real_pitch,
+        pos_y           : real_yaw,
+        desired_vel_x   : real_vx,
+        desired_vel_y   : real_vy,
+        vel_x           : real_vz,
+        vel_y           : real_rollspeed,
+        desired_accel_x : real_pitchspeed,
+        desired_accel_y : real_yawspeed
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+struct PACKED log_Control_Tuning {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float    throttle_in;   // desired_z
+    float    angle_boost; // desired_thrust[0]
+    float    throttle_out; // desired_thrust[1]
+    float    throttle_hover; // desired_thrust[2]
+    float    desired_alt; // desired_thrust[3]
+    float    inav_alt;    // desired_thrust_sum
+    int32_t  baro_alt;    
+    int16_t  desired_rangefinder_alt;   
+    int16_t  rangefinder_alt;  // throttle_in
+    float    terr_alt;    // real_battery
+    int16_t  target_climb_rate;
+    int16_t  climb_rate;
+};
+
+// Write a control tuning packet
+void Copter::Log_Write_Control_Tuning()
+{
+    // get terrain altitude
+    float terr_alt = 0.0f;
+#if AP_TERRAIN_AVAILABLE && AC_TERRAIN
+    if (terrain.height_above_terrain(terr_alt, true)) {
+        terr_alt = 0.0f;
+    }
+#endif
+
+    struct log_Control_Tuning pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_CONTROL_TUNING_MSG),
+        time_us             : AP_HAL::micros64(),
+        throttle_in         : desired_z,
+        angle_boost         : desired_thrust[0],
+        throttle_out        : desired_thrust[1],
+        throttle_hover      : desired_thrust[2],
+        desired_alt         : desired_thrust[3],
+        inav_alt            : desired_thrust[0] + desired_thrust[1] + desired_thrust[2] + desired_thrust[3],
+        baro_alt            : baro_alt,
+        desired_rangefinder_alt : (int16_t)target_rangefinder_alt,
+        rangefinder_alt     : get_channel_throttle_control_in(),
+        terr_alt            : real_battery,
         target_climb_rate   : (int16_t)pos_control->get_vel_target_z(),
         climb_rate          : climb_rate
     };
