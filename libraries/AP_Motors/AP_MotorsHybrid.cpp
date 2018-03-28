@@ -47,16 +47,16 @@
  #define MAX_ROTOR_IN_COPTER 4
 // Q = [1 1 1 1 1 1 1 1 1 1 1 1]. R = [5 5 5 5]. Mass = 1.061kg.
 const float K[MAX_ROTOR_IN_COPTER][NUM_COL] = {
-    {-0.001517f,  -0.316925f,  -0.225105f,  -2.795688f,  0.019441f,  0.312679f,  -0.003105f,  -0.617822f,  -0.472278f,  -0.649032f,  0.013513f,  0.652867f,  },
-    {-0.000794f,  0.315503f,  -0.222109f,  2.783097f,  0.015402f,  0.319765f,  -0.001814f,  0.615047f,  -0.465969f,  0.646191f,  0.013246f,  0.667682f,  },
-    {-0.317180f,  0.003188f,  -0.222102f,  0.028603f,  2.592828f,  -0.316410f,  -0.607669f,  0.006247f,  -0.465966f,  0.006447f,  0.550860f,  -0.660172f,  },
-    {0.315268f,  0.002476f,  -0.225091f,  0.020609f,  -2.593504f,  -0.316018f,  0.604513f,  0.004769f,  -0.472249f,  0.004229f,  -0.570610f,  -0.660353f,  },
+{0.001813f,  -0.315882f,  -0.224487f,  -2.802199f,  0.000131f,  0.315660f,  0.002959f,  -0.616608f,  -0.500556f,  -0.654212f,  0.015672f,  0.843064f,  },
+{0.001644f,  0.316570f,  -0.222716f,  2.807963f,  0.000696f,  0.316791f,  0.002680f,  0.617939f,  -0.496597f,  0.655216f,  0.015655f,  0.846076f,  },
+{-0.316049f,  0.000827f,  -0.224952f,  0.006889f,  2.541661f,  -0.314672f,  -0.603366f,  0.001591f,  -0.501588f,  0.001505f,  0.526616f,  -0.839463f,  },
+{0.316397f,  0.000991f,  -0.222260f,  0.009187f,  -2.572984f,  -0.317780f,  0.604988f,  0.001955f,  -0.495580f,  0.002219f,  -0.564177f,  -0.849685f,  },
 };
 const float u0[MAX_ROTOR_IN_COPTER] = {
-    2.649072f,
-    2.613528f,
-    2.613634f,
-    2.648966f,
+    3.269005f,
+    3.243095f,
+    3.275689f,
+    3.236411f,
 };
 
 const float xybound = 3.0f;
@@ -247,24 +247,20 @@ void AP_MotorsHybrid::output_to_motors() {
         }
         case SPIN_WHEN_ARMED:
             // sends output to motors when armed but not flying
-            for (i=0; i<MAX_ROTOR_IN_COPTER; i++) {
+            /*for (i=0; i<MAX_ROTOR_IN_COPTER; i++) {
                 motor_out[i] = calc_spin_up_to_pwm();
             }
-            /*for (i=0; i<MAX_ROTOR_IN_COPTER; i++) {
-                float pwm = thrust2pwm_black_bi(_thrust_rpyt_out[i], average_voltage) * 0.7;
-                pwm = clamp(pwm, (float)1200.0f, (float)2000.0f);
-                motor_out[i] = (int16_t)pwm;
-                // motor_out[i] = 1500;
-            }*/
-            break;
+            break;*/
         case SPOOL_UP:
         case THROTTLE_UNLIMITED:
         case SPOOL_DOWN:
             // set motor output based on thrust requests
             for (i=0; i<MAX_ROTOR_IN_COPTER; i++) {
                 float pwm = thrust2pwm_black_bi(_thrust_rpyt_out[i], average_voltage);
-                pwm = clamp(pwm, (float)1200.0f, (float)2000.0f);
+                pwm = clamp(pwm, (float)1100.0f, (float)1900.0f);
                 motor_out[i] = (int16_t)pwm;
+                //double angle = (current_frame % 360 + i * 60) / 180.0 * 3.14159265;
+                //motor_out[i] = 400.0 * sin(angle) + 1500.0f;
                 // motor_out[i] = 1500;
             }
             break;
@@ -276,6 +272,7 @@ void AP_MotorsHybrid::output_to_motors() {
     }
     _copter.pwm_out[0] = motor_out[0]; _copter.pwm_out[1] = motor_out[1]; _copter.pwm_out[2] = motor_out[2]; _copter.pwm_out[3] = motor_out[3];
     _copter.real_battery = average_voltage;
+    _copter.spool_mode = (int)_spool_mode;
 }
 
 void AP_MotorsHybrid::output_armed_stabilizing() {
@@ -338,7 +335,7 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
     } else if (yaw_diff < -PI) {
         yaw_diff += 2 * PI;
     }
-    X_minus_X0[5] = yaw_diff;
+    X_minus_X0[5] = 0;//yaw_diff;
 
     float K_times_X_minus_X0[MAX_ROTOR_IN_COPTER];
     for (int i = 0; i < MAX_ROTOR_IN_COPTER; ++i) {
@@ -361,4 +358,17 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
     _copter.desired_thrust[1] = _thrust_rpyt_out[1];
     _copter.desired_thrust[2] = _thrust_rpyt_out[2];
     _copter.desired_thrust[3] = _thrust_rpyt_out[3];
+    _copter.throttle_in = (int16_t)thr_ctrl;
+}
+
+/*
+  call vehicle supplied thrust compensation if set. This allows
+  vehicle code to compensate for vehicle specific motor arrangements
+  such as tiltrotors or tiltwings
+*/
+void AP_MotorsHybrid::thrust_compensation(void)
+{
+    if (_thrust_compensation_callback) {
+        _thrust_compensation_callback(_thrust_rpyt_out, AP_MOTORS_MAX_NUM_MOTORS);
+    }
 }

@@ -219,6 +219,8 @@ public:
     float desired_z;
     float pwm_out[4], desired_thrust[4];
     float real_battery;
+    int   spool_mode;
+    int16_t throttle_in;
 
 private:
     // key aircraft parameters passed to multiple libraries

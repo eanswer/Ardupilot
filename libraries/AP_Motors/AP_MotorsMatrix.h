@@ -38,7 +38,7 @@ public:
     void                output_test(uint8_t motor_seq, int16_t pwm);
 
     // output_to_motors - sends minimum values out to the motors
-    void                output_to_motors();
+    virtual void        output_to_motors();
 
     // get_motor_mask - returns a bitmask of which outputs are being used for motors (1 means being used)
     //  this can be used to ensure other pwm outputs (i.e. for servos) do not conflict
@@ -46,7 +46,7 @@ public:
 
 protected:
     // output - sends commands to the motors
-    void                output_armed_stabilizing();
+    virtual void                output_armed_stabilizing();
 
     // add_motor using raw roll, pitch, throttle and yaw factors
     void                add_motor_raw(int8_t motor_num, float roll_fac, float pitch_fac, float yaw_fac, uint8_t testing_order);

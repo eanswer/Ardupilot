@@ -390,7 +390,7 @@ struct PACKED log_Control_Tuning {
     float    throttle_hover; // desired_thrust[2]
     float    desired_alt; // desired_thrust[3]
     float    inav_alt;    // desired_thrust_sum
-    int32_t  baro_alt;    
+    int32_t  baro_alt;    // spool_mode
     int16_t  desired_rangefinder_alt;   
     int16_t  rangefinder_alt;  // throttle_in
     float    terr_alt;    // real_battery
@@ -418,8 +418,8 @@ void Copter::Log_Write_Control_Tuning()
         throttle_hover      : desired_thrust[2],
         desired_alt         : desired_thrust[3],
         inav_alt            : desired_thrust[0] + desired_thrust[1] + desired_thrust[2] + desired_thrust[3],
-        baro_alt            : baro_alt,
-        desired_rangefinder_alt : (int16_t)target_rangefinder_alt,
+        baro_alt            : spool_mode,
+        desired_rangefinder_alt : throttle_in,
         rangefinder_alt     : get_channel_throttle_control_in(),
         terr_alt            : real_battery,
         target_climb_rate   : (int16_t)pos_control->get_vel_target_z(),
