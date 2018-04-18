@@ -30,10 +30,15 @@ protected:
     // output - sends commands to the motors
     void                output_armed_stabilizing();
     void                thrust_compensation(void) override;
-    
+
 private:
     // Points to the Copter class so that we can get all kinds of sensor's data.
     Copter&       _copter;
+
+    bool initialization_finished;
+    double initial_yaw_sum;
+    float initial_yaw;
+    int yaw_count;
 };
 
 #endif  // AP_MOTORSHybrid

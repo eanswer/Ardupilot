@@ -386,9 +386,9 @@ struct PACKED log_Control_Tuning {
     uint64_t time_us;
     float    throttle_in;   // desired_z
     float    angle_boost; // desired_thrust[0]
-    float    throttle_out; // desired_thrust[1]
-    float    throttle_hover; // desired_thrust[2]
-    float    desired_alt; // desired_thrust[3]
+    float    throttle_out; // desired_roll // desired_thrust[1]
+    float    throttle_hover; // desired_pitch // desired_thrust[2]
+    float    desired_alt; // desired_yaw // desired_thrust[3]
     float    inav_alt;    // desired_thrust_sum
     int32_t  baro_alt;    // spool_mode
     int16_t  desired_rangefinder_alt;   
@@ -414,12 +414,12 @@ void Copter::Log_Write_Control_Tuning()
         time_us             : AP_HAL::micros64(),
         throttle_in         : desired_z,
         angle_boost         : desired_thrust[0],
-        throttle_out        : desired_thrust[1],
-        throttle_hover      : desired_thrust[2],
-        desired_alt         : desired_thrust[3],
+        throttle_out        : desired_roll,//desired_thrust[1],
+        throttle_hover      : desired_pitch, //desired_thrust[2],
+        desired_alt         : desired_yaw, // desired_thrust[3],
         inav_alt            : desired_thrust[0] + desired_thrust[1] + desired_thrust[2] + desired_thrust[3],
         baro_alt            : spool_mode,
-        desired_rangefinder_alt : throttle_in,
+        desired_rangefinder_alt : thr_ctrl_in,
         rangefinder_alt     : get_channel_throttle_control_in(),
         terr_alt            : real_battery,
         target_climb_rate   : (int16_t)pos_control->get_vel_target_z(),

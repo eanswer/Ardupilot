@@ -208,19 +208,33 @@ public:
         return Vector3f(velocity_neu.x, velocity_neu.y, -velocity_neu.z);
     }
     // frame_conversion_ef_to_bf - converts earth frame vector to body frame vector
-    const Vector3f frame_conversion_ef_to_bf(const Vector3f& ef_vector) const {
+    /*const Vector3f frame_conversion_ef_to_bf(const Vector3f& ef_vector) const {
         // convert earth frame rates to body frame rates
         return Vector3f(ef_vector.x - ahrs.sin_pitch() * ef_vector.z,
             ahrs.cos_roll()  * ef_vector.y + ahrs.sin_roll() * ahrs.cos_pitch() * ef_vector.z,
             -ahrs.sin_roll() * ef_vector.y + ahrs.cos_pitch() * ahrs.cos_roll() * ef_vector.z);
+    }*/
+    // frame_conversion_ef_to_bf - converts earth frame vector to body frame vector
+    const Vector3f frame_conversion_ef_to_bf(const Vector3f& ef_vector) const {
+        // convert earth frame rates to body frame rates
+        double bf_x = ahrs.cos_yaw() * ahrs.cos_pitch() * ef_vector.x
+                    + ahrs.cos_pitch() * ahrs.sin_yaw() * ef_vector.y
+                    - ahrs.sin_pitch() * ef_vector.z;
+        double bf_y = (ahrs.cos_yaw() * ahrs.sin_roll() * ahrs.sin_pitch() - ahrs.cos_roll() * ahrs.sin_yaw()) * ef_vector.x
+                    + (ahrs.cos_roll() * ahrs.cos_yaw() + ahrs.sin_roll() * ahrs.sin_pitch() * ahrs.sin_yaw()) * ef_vector.y
+                    + ahrs.cos_pitch() * ahrs.sin_roll() * ef_vector.z;
+        double bf_z = (ahrs.sin_roll() * ahrs.sin_yaw() + ahrs.cos_roll() * ahrs.cos_yaw() * ahrs.sin_pitch()) * ef_vector.x
+                    + (ahrs.cos_roll() * ahrs.sin_yaw() * ahrs.sin_pitch() - ahrs.cos_yaw() * ahrs.sin_roll()) * ef_vector.y
+                    + ahrs.cos_roll() * ahrs.cos_pitch() * ef_vector.z;
+        return Vector3f(bf_x, bf_y, bf_z);
     }
     // Controller Infomation
     float real_x, real_y, real_z, real_roll, real_pitch, real_yaw, real_vx, real_vy, real_vz, real_rollspeed, real_pitchspeed, real_yawspeed;
-    float desired_z;
+    float desired_z, desired_roll, desired_pitch, desired_yaw;
     float pwm_out[4], desired_thrust[4];
     float real_battery;
     int   spool_mode;
-    int16_t throttle_in;
+    int16_t thr_ctrl_in;
 
 private:
     // key aircraft parameters passed to multiple libraries
