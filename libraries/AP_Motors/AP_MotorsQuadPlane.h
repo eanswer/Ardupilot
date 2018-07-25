@@ -14,6 +14,16 @@ class Copter;
 #define MAX_STEPS 100
 #define NUM_ROTORS 5
 #define NUM_STATES 12
+#define MIN_COPTER_ALTITUDE -3
+#define MAX_COPTER_ALTITUDE 5
+#define MIN_ROLL_PITCH_DEGREE -30
+#define MAX_ROLL_PITCH_DEGREE 30
+#define MIN_YAW_RATE_DEGREE -45
+#define MAX_YAW_RATE_DEGREE 45
+
+#ifndef PI
+    #define PI 3.1415927
+#endif
 
 /// @class      AP_TrimStateController
 class AP_TrimStateController {
@@ -85,7 +95,7 @@ protected:
     void thrust_compensation(void) override {}
     void update_mode();
     void getStateSpaceVector(float state);
-    
+
 private:
     Copter&     _copter;
     uint8_t     current_mode;
