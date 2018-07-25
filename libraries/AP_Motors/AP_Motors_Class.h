@@ -38,6 +38,9 @@ public:
         MOTOR_FRAME_COAX = 9,
         MOTOR_FRAME_TAILSITTER = 10,
         MOTOR_FRAME_HELI_DUAL = 11,
+        // July 25, 2018
+        // Jie Xu
+        MOTOR_FRAME_QUADPLANE_CFG = 12,
     };
     enum motor_frame_type {
         MOTOR_FRAME_TYPE_PLUS = 0,
@@ -151,6 +154,10 @@ public:
     // pilot input in the -1 ~ +1 range for roll, pitch and yaw. 0~1 range for throttle
     void                set_radio_passthrough(float roll_input, float pitch_input, float throttle_input, float yaw_input);
 
+    // July 25, 2018
+    // Jie Xu
+    void                set_switch_passthrough(uint8_t switch_CH5, uint8_t switch_CH6);
+
     // set loop rate. Used to support loop rate as a parameter
     void                set_loop_rate(uint16_t loop_rate) { _loop_rate = loop_rate; }
 
@@ -215,6 +222,10 @@ protected:
     float _pitch_radio_passthrough = 0.0f;    // pitch input from pilot in -1 ~ +1 range.  used for setup and providing servo feedback while landed
     float _throttle_radio_passthrough = 0.0f; // throttle/collective input from pilot in 0 ~ 1 range.  used for setup and providing servo feedback while landed
     float _yaw_radio_passthrough = 0.0f;      // yaw input from pilot in -1 ~ +1 range.  used for setup and providing servo feedback while landed
+    // July 25, 2018
+    // Jie Xu
+    float _switch_CH5_passthrough = 0;
+    float _switch_CH6_passthrough = 0;
 
     AP_Int8             _pwm_type;            // PWM output type
 };

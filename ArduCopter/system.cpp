@@ -589,6 +589,12 @@ void Copter::allocate_motors(void)
 {
     switch ((AP_Motors::motor_frame_class)g2.frame_class.get()) {
 #if FRAME_CONFIG != HELI_FRAME
+        // July 25, 2018
+        // Jie Xu
+        case AP_Motors::MOTOR_FRAME_QUADPLANE_CFG:
+            motors = new AP_MotorsQuadPlane(MAIN_LOOP_RATE);
+            motors_var_info = AP_MotorsQuadPlane::var_info;
+            break;
         case AP_Motors::MOTOR_FRAME_QUAD:
         case AP_Motors::MOTOR_FRAME_HEXA:
         case AP_Motors::MOTOR_FRAME_Y6:

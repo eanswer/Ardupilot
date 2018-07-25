@@ -78,6 +78,10 @@ void AP_Motors::set_radio_passthrough(float roll_input, float pitch_input, float
     _yaw_radio_passthrough = yaw_input;
 }
 
+void AP_Motors::set_switch_passthrough(uint8_t switch_CH5, uint8_t switch_CH6) {
+    _switch_CH5_passthrough = switch_CH5;
+    _switch_CH6_passthrough = switch_CH6;
+}
 /*
   write to an output channel
  */

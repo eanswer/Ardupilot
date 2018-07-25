@@ -10,3 +10,5 @@
 #include "AP_MotorsCoax.h"
 #include "AP_MotorsTailsitter.h"
 #include "AP_Motors6DOF.h"
+// July 25, 2018
+#include "AP_MotorsQuadPlane.h"
