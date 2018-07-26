@@ -10,12 +10,12 @@ extern const AP_HAL::HAL& hal;
 
 void copy_array(float* dst, float* src, uint16_t N) {
     for (uint16_t i = 0;i < N;++i)
-            dst[i] = src[i];
+        dst[i] = src[i];
 }
 
 void copy_array(uint32_t* dst, uint32_t* src, uint16_t N) {
     for (uint16_t i = 0;i < N;++i)
-            dst[i] = src[i];
+        dst[i] = src[i];
 }
 
 float clamp(float x, float l, float r) {
@@ -44,23 +44,23 @@ float warp_radian(float radian) {
     return radian;
 }
 
-void state_diff(float state1[], float state2[], float diff[]) {
+void stateDiff(float state1[], float state2[], float diff[]) {
     for (uint8_t i = 0;i < NUM_STATES;++i)
         diff[i] = state1[i] - state2[i];
     for (uint8_t i = 3;i < 6;++i)
         diff[i] = warp_radian(diff[i]);
 }
 
-void AP_TrimStateController::AP_TrimStateController(float _K[][NUM_STATES], 
+AP_TrimStateController::AP_TrimStateController(float _K[][NUM_STATES], 
     float _state0[], float _u0[]) {
     
-    copy_array(K, _K, NUM_ROTORS * NUM_STATES);
+    copy_array(K[0], _K[0], NUM_ROTORS * NUM_STATES);
     copy_array(state0, _state0, NUM_STATES);
     copy_array(u0, _u0, NUM_ROTORS);
 }
 
 void AP_TrimStateController::set_K(float _K[][NUM_STATES]) {
-    copy_array(K, _K, NUM_ROTORS * NUM_STATES);
+    copy_array(K[0], _K[0], NUM_ROTORS * NUM_STATES);
 }
 
 void AP_TrimStateController::set_state0(float _state0[]) {
@@ -71,8 +71,8 @@ void AP_TrimStateController::set_u0(float _u0[]) {
     copy_array(u0, _u0, NUM_ROTORS);
 }
 
-void AP_TransitionController::AP_TransitionController(float _K[][NUM_ROTORS][NUM_STATES],
-    float _state0[][NUM_STATES], float _u0[][NUM_ROTORS], uint32_t _timestamps_ms[], 
+AP_TransitionController::AP_TransitionController(float _K[][NUM_ROTORS][NUM_STATES],
+    float _state0[][NUM_STATES], float _u0[][NUM_ROTORS], uint32_t _timestamp_ms[], 
     uint16_t _num_steps) {
 
     if (_num_steps < 1) {
@@ -81,11 +81,11 @@ void AP_TransitionController::AP_TransitionController(float _K[][NUM_ROTORS][NUM
     }
 
     num_steps = _num_steps;
-    copy_array(K, _K, _num_steps * NUM_ROTORS * NUM_STATES);
-    copy_array(state0, _state0, _num_steps, NUM_STATES);
-    copy_array(u0, _u0, _num_steps * NUM_ROTORS);
-    copy_array(time_stamps_ms, _time_stamps_ms, _num_steps);
-    total_transition_time = _time_stamps_ms[_num_steps - 1];
+    copy_array(K[0][0], _K[0][0], _num_steps * NUM_ROTORS * NUM_STATES);
+    copy_array(state0[0], _state0[0], _num_steps * NUM_STATES);
+    copy_array(u0[0], _u0[0], _num_steps * NUM_ROTORS);
+    copy_array(timestamp_ms, _timestamp_ms, _num_steps);
+    total_transition_time = _timestamp_ms[_num_steps - 1];
 }
 
 void AP_TransitionController::set_K(float _K[][NUM_ROTORS][NUM_STATES], uint16_t _num_steps) {
@@ -96,7 +96,7 @@ void AP_TransitionController::set_K(float _K[][NUM_ROTORS][NUM_STATES], uint16_t
     }
 
     num_steps = _num_steps;
-    copy_array(K, _K, _num_steps * NUM_ROTORS * NUM_STATES);
+    copy_array(K[0][0], _K[0][0], _num_steps * NUM_ROTORS * NUM_STATES);
 }
 
 void AP_TransitionController::set_state0(float _state0[][NUM_STATES], uint16_t _num_steps) {
@@ -107,7 +107,7 @@ void AP_TransitionController::set_state0(float _state0[][NUM_STATES], uint16_t _
     }
 
     num_steps = _num_steps;
-    copy_array(state0, _state0, _num_steps * NUM_STATES);
+    copy_array(state0[0], _state0[0], _num_steps * NUM_STATES);
 }
 
 void AP_TransitionController::set_u0(float _u0[][NUM_ROTORS], uint16_t _num_steps) {
@@ -118,10 +118,10 @@ void AP_TransitionController::set_u0(float _u0[][NUM_ROTORS], uint16_t _num_step
     }
 
     num_steps = _num_steps;
-    copy_array(u0, _u0, _num_steps * NUM_ROTORS);
+    copy_array(u0[0], _u0[0], _num_steps * NUM_ROTORS);
 }
 
-void AP_TransitionController::set_timestamps(uint32_t _timestamps_ms[], uint16_t _num_steps) {
+void AP_TransitionController::set_timestamps(uint32_t _timestamp_ms[], uint16_t _num_steps) {
 
     if (_num_steps < 1 || (num_steps != 0 && _num_steps != num_steps)) {
         // something went wrong
@@ -129,12 +129,11 @@ void AP_TransitionController::set_timestamps(uint32_t _timestamps_ms[], uint16_t
     }
 
     num_steps = _num_steps;
-    copy_array(timestamps_ms, _timestamps_ms, _num_steps);
+    copy_array(timestamp_ms, _timestamp_ms, _num_steps);
 }
 
-void AP_MotorsQuadPlane::init(motor_frame_class frame_class, motor_frame_type frame_type, Copter& cop) {
+void AP_MotorsQuadPlane::init(motor_frame_class frame_class, motor_frame_type frame_type) {
 
-    _copter = cop;
     current_mode = 0;
 
     // setup the motors
@@ -154,11 +153,11 @@ void AP_MotorsQuadPlane::setup_motors(motor_frame_class frame_class, motor_frame
     }
 
     if (frame_class == MOTOR_FRAME_QUADPLANE_CFG) {
-        add_motor(AP_MOTOR_MOT_1, 0, 0, 1);
-        add_motor(AP_MOTOR_MOT_2, 0, 0, 2);
-        add_motor(AP_MOTOR_MOT_3, 0, 0, 3);
-        add_motor(AP_MOTOR_MOT_4, 0, 0, 4);
-        add_motor(AP_MOTOR_MOT_5, 0, 0, 5);
+        add_motor(AP_MOTORS_MOT_1, 0, 0, 1);
+        add_motor(AP_MOTORS_MOT_2, 0, 0, 2);
+        add_motor(AP_MOTORS_MOT_3, 0, 0, 3);
+        add_motor(AP_MOTORS_MOT_4, 0, 0, 4);
+        add_motor(AP_MOTORS_MOT_5, 0, 0, 5);
         _flags.initialised_ok = true;
     } else {
         _flags.initialised_ok = false;
@@ -239,7 +238,7 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
 
     float _roll_norm_in = _roll_radio_passthrough;
     float _pitch_norm_in = _pitch_radio_passthrough;
-    float _yaw_norm_in = _yaw_radio_passthrough];
+    float _yaw_norm_in = _yaw_radio_passthrough;
     float _throttle_norm_in = _throttle_radio_passthrough;
     
     update_mode();
@@ -259,7 +258,7 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
         } else {
             // something went wrong
         }
-    } else if (mode_switch == QUADPLANE_COPTER_MODE) {
+    } else if (current_mode == QUADPLANE_COPTER_MODE) {
         // get state0
         for (uint8_t i = 0;i < NUM_STATES;++i)
             state0[i] = controller_copter.state0[i];
@@ -281,13 +280,13 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
 
         // get K
         for (uint8_t i = 0;i < NUM_ROTORS;++i)
-            for (uint8 j = 0;j < NUM_STATES;++j)
+            for (uint8_t j = 0;j < NUM_STATES;++j)
                 K[i][j] = controller_copter.K[i][j];
         
         // get u0
         for (uint8_t i = 0;i < NUM_ROTORS;++i)
             u0[i] = controller_copter.u0[i];
-    } else if (mode_switch == QUADPLANE_GLIDING_MODE) {
+    } else if (current_mode == QUADPLANE_GLIDING_MODE) {
 
     } else {
         // something went wrong
@@ -298,9 +297,9 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
     stateDiff(state, state0, state_diff);
     
     float K_times_diff[NUM_ROTORS];
-    for (uint8 i = 0;i < NUM_ROTORS;++i) {
+    for (uint8_t i = 0;i < NUM_ROTORS;++i) {
         K_times_diff[i] = 0;
-        for (uint8 j = 0;j < NUM_STATES;++j)
+        for (uint8_t j = 0;j < NUM_STATES;++j)
             K_times_diff[i] += K[i][j] * state_diff[j];
     }
 

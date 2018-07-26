@@ -224,8 +224,8 @@ protected:
     float _yaw_radio_passthrough = 0.0f;      // yaw input from pilot in -1 ~ +1 range.  used for setup and providing servo feedback while landed
     // July 25, 2018
     // Jie Xu
-    float _switch_CH5_passthrough = 0;
-    float _switch_CH6_passthrough = 0;
+    uint8_t _switch_CH5_passthrough = 0;
+    uint8_t _switch_CH6_passthrough = 0;
 
     AP_Int8             _pwm_type;            // PWM output type
 };

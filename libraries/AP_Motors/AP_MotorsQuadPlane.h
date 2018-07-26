@@ -52,7 +52,7 @@ public:
     void set_K(float _K[][NUM_ROTORS][NUM_STATES], uint16_t _num_steps);
     void set_state0(float _state0[][NUM_STATES], uint16_t _num_steps);
     void set_u0(float _u0[][NUM_ROTORS], uint16_t _num_steps);
-    void set_timestamps(uint32_t _timestamps_ms[], uint16_t _num_steps);
+    void set_timestamps(uint32_t _timestamp_ms[], uint16_t _num_steps);
 
     float K[MAX_STEPS][NUM_ROTORS][NUM_STATES];
     float state0[MAX_STEPS][NUM_STATES];
@@ -73,11 +73,11 @@ public:
     enum {
         TRANSITION_COPTER_TO_GLIDING = 0,
         TRANSITION_GLIDING_TO_COPTER = 1,
-    }
+    };
 
     /// Constructor
-    AP_MotorsQuadPlane(uint16_t loop_rate, uint16_t speed_hz, Copter& cop) :
-        AP_MotorsMatrix(loop_rate, speed_hz) { _copter = cop; }
+    AP_MotorsQuadPlane(uint16_t loop_rate, uint16_t speed_hz) :
+        AP_MotorsMatrix(loop_rate, speed_hz) {}
 
     // init
     void init(motor_frame_class frame_class, motor_frame_type frame_type) override;
@@ -94,10 +94,9 @@ protected:
     void output_armed_stabilizing() override;
     void thrust_compensation(void) override {}
     void update_mode();
-    void getStateSpaceVector(float state);
+    void getStateSpaceVector(float state[]);
 
 private:
-    Copter&     _copter;
     uint8_t     current_mode;
     bool        in_transition;
     uint8_t     transition_direction;
