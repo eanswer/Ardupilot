@@ -264,6 +264,10 @@ void Copter::fast_loop()
     // run low level rate controllers that only require IMU data
     attitude_control->rate_controller_run();
 
+    // July, 2018
+    // Jie Xu
+    send_sensor_info_to_motor();
+
     // send outputs to the motors library immediately
     motors_output();
 
@@ -300,6 +304,18 @@ void Copter::fast_loop()
     if (should_log(MASK_LOG_ANY)) {
         Log_Sensor_Health();
     }
+}
+
+// July, 2018
+// Jie Xu
+void Copter::send_sensor_info_to_motor() {
+    motors.set_attitude(ahrs.roll, ahrs.pitch, ahrs.yaw);
+    motors.set_trig(ahrs.sin_roll(), ahrs.sin_pitch(), ahrs.sin_yaw(), ahrs.cos_roll(), ahrs.cos_pitch(), ahrs.cos_yaw());
+    motors.set_attitude_rate(ahrs.get_gyro().x, ahrs.get_gyro().y, ahrs.get_gyro().z);
+    motors.set_altitude(inertial_nav.get_altitude() / 100.0f);
+    Vector3f& velocity_neu = inertial_nav.get_velocity() / 100.0f;
+    motors.set_ned_velocity(Vector3f(velocity_neu.x, velocity_neu.y, -velocity_neu.z);
+    motors.set_battery_voltage(battery.voltage());
 }
 
 // rc_loops - reads user input from transmitter/receiver

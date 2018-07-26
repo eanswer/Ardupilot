@@ -132,6 +132,28 @@ void AP_TransitionController::set_timestamps(uint32_t _timestamp_ms[], uint16_t 
     copy_array(timestamp_ms, _timestamp_ms, _num_steps);
 }
 
+void AP_TransitionController::set_initial_altitude(float _initial_altitude) {
+    initial_altitude = _initial_altitude;
+    index = 0;
+}
+
+void AP_TransitionController::get_controller(uint32_t transition_time, float _K[][NUM_STATES], float _state0[], float _u0[]) {
+    for (;index < num_steps - 1 && transition_time > (timestamp_ms[index] + timestamp_ms[index + 1]) / 2.0;) {
+        ++ index;
+    }
+    for (uint16_t i = 0;i < NUM_ROTORS;++i)
+        for (uint16_t j = 0;j < NUM_STATES;++j)
+            _K[i][j] = K[index][i][j];
+    for (uint16_t i = 0;i < NUM_STATES;++i)
+        _state0[i] = state0[index][i];
+    for (uint16_t i = 0;i < NUM_ROTORS;++i)
+        _u0[i] = u0[index][i];
+
+    _state0[0] += -initial_altitude;
+
+    return (transition_time < timestamp_ms[num_steps - 1]);
+}
+
 void AP_MotorsQuadPlane::init(motor_frame_class frame_class, motor_frame_type frame_type) {
 
     current_mode = 0;
@@ -251,13 +273,21 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
     getStateSpaceVector(state);
 
     if (in_transition) {
+        uint32_t transition_time = AP_HAL::millis() - transition_start_time_ms;
+
         if (transition_direction == TRANSITION_COPTER_TO_GLIDING) {
-
+            in_transition = !controller_copter_to_gliding.get_controller(transition_time, K, state0, u0);
+            if (!in_transition) {
+                controller_gliding.set_desired_altitude(controller_copter.get_desired_altitude());
+            }
         } else if (transition_direction == TRANSITION_GLIDING_TO_COPTER) {
-
+            in_transition = !controller_gliding_to_copter.get_controller(transition_time);
         } else {
             // something went wrong
         }
+
+        state[0] = state0[0]; state[1] = state0[1];
+        state[5] = state0[5];
     } else if (current_mode == QUADPLANE_COPTER_MODE) {
         // get state0
         for (uint8_t i = 0;i < NUM_STATES;++i)
@@ -266,8 +296,10 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
         // get current state vector
         float desired_altitude = remap(_throttle_norm_in, 0.0f, 1.0f, MIN_COPTER_ALTITUDE, MAX_COPTER_ALTITUDE);
         float desired_roll = remap(_roll_norm_in, -1.0f, 1.0f, degree2radian(MIN_ROLL_PITCH_DEGREE), degree2radian(MAX_ROLL_PITCH_DEGREE));
-        float desired_pitch = remap(_pitch_norm_in, 1.0f, -1.0f, degree2radian(MIN_ROLL_PITCH_DEGREE), degree2radian(MAX_ROLL_PITCH_DEGREE));
+        float desired_pitch = remap(_pitch_norm_in, -1.0f, 1.0f, degree2radian(MIN_ROLL_PITCH_DEGREE), degree2radian(MAX_ROLL_PITCH_DEGREE));
         float desired_yaw_rate = remap(_throttle_norm_in, -1.0f, 1.0f, degree2radian(MIN_YAW_RATE_DEGREE), degree2radian(MAX_YAW_RATE_DEGREE));
+
+        controller_copter.set_desired_altitude(desired_altitude);
 
         state0[2] = -desired_altitude;
         state0[3] = desired_roll;
@@ -287,7 +319,31 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
         for (uint8_t i = 0;i < NUM_ROTORS;++i)
             u0[i] = controller_copter.u0[i];
     } else if (current_mode == QUADPLANE_GLIDING_MODE) {
+        // get state0
+        for (uint8_t i = 0;i < NUM_STATES;++i)
+            state0[i] = controller_gliding.state0[i];
+        
+        // get current state vector
+        float desired_altitude_rate = remap(_pitch_norm_in, -1.0f, 1.0f, MIN_GLIDING_ALTITUDE_RATE, MAX_GLIDING_ALTITUDE_RATE);
+        float desired_roll = remap(_roll_norm_in, -1.0f, 1.0f, degree2radian(MIN_ROLL_PITCH_DEGREE), degree2radian(MAX_ROLL_PITCH_DEGREE));
 
+        controler_gliding.desired_altitude += GLIDING_ALTITUDE_RATE_COEF * desired_altitude_rate; 
+        
+        state0[2] = -controller_gliding.desired_altitude;
+        state0[3] = desired_roll;
+        state0[11] = GLIDING_ROLL_TO_YAW_MIXING * desired_roll;
+
+        state[0] = state0[0]; state[1] = state0[1];
+        state[5] = state0[5];
+
+        // get K
+        for (uint8_t i = 0;i < NUM_ROTORS;++i)
+            for (uint8_t j = 0;j < NUM_STATES;++j)
+                K[i][j] = controller_gliding.K[i][j];
+        
+        // get u0
+        for (uint8_t i = 0;i < NUM_ROTORS;++i)
+            u0[i] = controller_gliding.u0[i];
     } else {
         // something went wrong
     }
@@ -324,19 +380,36 @@ void AP_MotorsQuadPlane::update_mode() {
             return;
     }
 
-    if (mode_switch != current_mode) {
+    if (input_mode != current_mode) {
         in_transition = true;
-        current_mode = mode_switch;
+        current_mode = input_mode;
         transition_start_time_ms = AP_HAL::millis();
         if (current_mode == QUADPLANE_COPTER_MODE) {
             transition_direction = TRANSITION_GLIDING_TO_COPTER;
+            controller_gliding_to_copter.set_initial_altitude(get_altitude());
         } else {
             transition_direction = TRANSITION_COPTER_TO_GLIDING;
+            controller_copter_to_gliding.set_initial_altitude(get_altitude());
         }
     }
 }
 
+float AP_MotorsQuadPlane::get_altitude() {
+    return altitude;
+}
+
+Vector3f get_velocity_in_body_frame() {
+    float v_x_b = ned_velocity.y * sin_yaw + ned_velocity.x * cos_yaw;
+    float v_y_b = ned_velocity.y * cos_yaw - ned_velocity.x * sin_yaw;
+    Vector3f velocity_body(v_x_b, v_y_b, ned_velocity.z);
+    return velocity_body;
+}
+
 // [0, 0, z, roll, pitch, yaw, vx_b, vy_b, vz_b, v_roll, v_pitch, v_yaw]
 void AP_MotorsQuadPlane::getStateSpaceVector(float state[]) {
-
+    state[0] = 0; state[1] = 0; state[2] = -get_altitude();
+    state[3] = roll; state[4] = pitch; state[5] = yaw;
+    Vector3f velocity_body = get_velocity_in_body_frame();
+    state[6] = velocity_body.x; state[7] = velocity_body.y; state[8] = velocity_body.z;
+    state[9] = roll_rate; state[10] = pitch_rate; state[11] = yaw_rate;
 }

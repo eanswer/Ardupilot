@@ -635,6 +635,11 @@ private:
     static const AP_Param::Info var_info[];
     static const struct LogStructure log_structure[];
 
+// --------------------------------------------------------------------
+// July, 2018
+// Jie Xu
+    void send_sensor_info_to_motor();
+// --------------------------------------------------------------------
     void compass_accumulate(void);
     void compass_cal_update(void);
     void barometer_accumulate(void);
