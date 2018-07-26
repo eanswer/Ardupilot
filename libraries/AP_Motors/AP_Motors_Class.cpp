@@ -92,7 +92,7 @@ void AP_Motors::set_attitude(float _roll, float _pitch, float _yaw) {
     yaw = _yaw;
 }
 
-void AP::Motors::set_trig(float _sin_roll, float _sin_pitch, float _sin_yaw, 
+void AP_Motors::set_trig(float _sin_roll, float _sin_pitch, float _sin_yaw, 
     float _cos_roll, float _cos_pitch, float _cos_yaw) {
     sin_roll = _sin_roll;
     sin_pitch = _sin_pitch;

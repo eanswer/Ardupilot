@@ -527,6 +527,10 @@ void Copter::set_default_frame_class()
 uint8_t Copter::get_frame_mav_type()
 {
     switch ((AP_Motors::motor_frame_class)g2.frame_class.get()) {
+        // July, 2018
+        // Jie Xu
+        case AP_Motors::MOTOR_FRAME_QUADPLANE_CFG:
+            return MAV_TYPE_GENERIC;
         case AP_Motors::MOTOR_FRAME_QUAD:
         case AP_Motors::MOTOR_FRAME_UNDEFINED:
             return MAV_TYPE_QUADROTOR;

@@ -43,7 +43,7 @@ void Copter::read_control_switch()
             // play a tone
             if (control_switch_state.debounced_switch_position != -1) {
                 // alert user to mode change failure (except if autopilot is just starting up)
-                if (ap.initialised
+                if (ap.initialised) {
                     AP_Notify::events.user_mode_change = 1;
                 }
             }

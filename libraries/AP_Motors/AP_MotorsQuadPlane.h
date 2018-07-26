@@ -39,7 +39,7 @@ public:
     void set_state0(float _state0[]);
     void set_u0(float _u0[]);
     void set_desired_altitude(float _desired_altitude) { desired_altitude = _desired_altitude; }
-    void get_desired_altitude() { return desired_altitude; }
+    float get_desired_altitude() { return desired_altitude; }
 
     float K[NUM_ROTORS][NUM_STATES];
     float state0[NUM_STATES];
@@ -60,7 +60,7 @@ public:
     void set_u0(float _u0[][NUM_ROTORS], uint16_t _num_steps);
     void set_timestamps(uint32_t _timestamp_ms[], uint16_t _num_steps);
     void set_initial_altitude(float _initial_altitude);
-    void get_controller(uint32_t transition_time, float _K[][NUM_STATES], float _state0[], float _u0[]);
+    bool get_controller(uint32_t transition_time, float _K[][NUM_STATES], float _state0[], float _u0[]);
 
     float K[MAX_STEPS][NUM_ROTORS][NUM_STATES];
     float state0[MAX_STEPS][NUM_STATES];
@@ -86,7 +86,7 @@ public:
     };
 
     /// Constructor
-    AP_MotorsQuadPlane(uint16_t loop_rate, uint16_t speed_hz) :
+    AP_MotorsQuadPlane(uint16_t loop_rate, uint16_t speed_hz = AP_MOTORS_SPEED_DEFAULT) :
         AP_MotorsMatrix(loop_rate, speed_hz) {}
 
     // init

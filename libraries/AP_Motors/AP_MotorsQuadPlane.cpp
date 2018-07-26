@@ -4,7 +4,6 @@
 #include <AP_HAL/AP_HAL.h>
 #include "AP_MotorsQuadPlane.h"
 #include "../../ArduCopter/Copter.h"
-#include "AP_QuadPlaneMatrices.h"
 
 extern const AP_HAL::HAL& hal;
 
@@ -137,7 +136,8 @@ void AP_TransitionController::set_initial_altitude(float _initial_altitude) {
     index = 0;
 }
 
-void AP_TransitionController::get_controller(uint32_t transition_time, float _K[][NUM_STATES], float _state0[], float _u0[]) {
+// return if transition ends
+bool AP_TransitionController::get_controller(uint32_t transition_time, float _K[][NUM_STATES], float _state0[], float _u0[]) {
     for (;index < num_steps - 1 && transition_time > (timestamp_ms[index] + timestamp_ms[index + 1]) / 2.0;) {
         ++ index;
     }
@@ -281,7 +281,7 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
                 controller_gliding.set_desired_altitude(controller_copter.get_desired_altitude());
             }
         } else if (transition_direction == TRANSITION_GLIDING_TO_COPTER) {
-            in_transition = !controller_gliding_to_copter.get_controller(transition_time);
+            in_transition = !controller_gliding_to_copter.get_controller(transition_time, K, state0, u0);
         } else {
             // something went wrong
         }
@@ -327,7 +327,7 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
         float desired_altitude_rate = remap(_pitch_norm_in, -1.0f, 1.0f, MIN_GLIDING_ALTITUDE_RATE, MAX_GLIDING_ALTITUDE_RATE);
         float desired_roll = remap(_roll_norm_in, -1.0f, 1.0f, degree2radian(MIN_ROLL_PITCH_DEGREE), degree2radian(MAX_ROLL_PITCH_DEGREE));
 
-        controler_gliding.desired_altitude += GLIDING_ALTITUDE_RATE_COEF * desired_altitude_rate; 
+        controller_gliding.desired_altitude += GLIDING_ALTITUDE_RATE_COEF * desired_altitude_rate; 
         
         state0[2] = -controller_gliding.desired_altitude;
         state0[3] = desired_roll;
@@ -398,7 +398,7 @@ float AP_MotorsQuadPlane::get_altitude() {
     return altitude;
 }
 
-Vector3f get_velocity_in_body_frame() {
+Vector3f AP_MotorsQuadPlane::get_velocity_in_body_frame() {
     float v_x_b = ned_velocity.y * sin_yaw + ned_velocity.x * cos_yaw;
     float v_y_b = ned_velocity.y * cos_yaw - ned_velocity.x * sin_yaw;
     Vector3f velocity_body(v_x_b, v_y_b, ned_velocity.z);
