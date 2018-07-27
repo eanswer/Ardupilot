@@ -520,12 +520,21 @@ void Copter::set_default_frame_class()
     if (FRAME_CONFIG == HELI_FRAME &&
         g2.frame_class.get() != AP_Motors::MOTOR_FRAME_HELI_DUAL) {
         g2.frame_class.set(AP_Motors::MOTOR_FRAME_HELI);
+    } else {
+        // July, 2018
+        // Jie Xu
+        // set default frame class to QUADPLANE_CFG
+        g2.frame_class.set(AP_Motors::MOTOR_FRAME_QUADPLANE_CFG);
     }
 }
 
 // return MAV_TYPE corresponding to frame class
 uint8_t Copter::get_frame_mav_type()
 {
+    // July, 2018
+    // Jie Xu
+    // for debugging
+    ::printf("motor_frame_class = %d\n", (AP_Motors::motor_frame_class)g2.frame_class.get());
     switch ((AP_Motors::motor_frame_class)g2.frame_class.get()) {
         // July, 2018
         // Jie Xu

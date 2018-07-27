@@ -304,7 +304,6 @@ void Copter::fast_loop()
     if (should_log(MASK_LOG_ANY)) {
         Log_Sensor_Health();
     }
-    ::printf("hello world from fast_loop()\n");
 }
 
 // July, 2018
