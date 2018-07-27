@@ -32,13 +32,13 @@ class Copter;
 class AP_TrimStateController {
 public:
     AP_TrimStateController() {}
-    AP_TrimStateController(float _K[][NUM_STATES], float _state0[], float _u0[]);
+    AP_TrimStateController(const float _K[][NUM_STATES], const float _state0[], const float _u0[]);
     ~AP_TrimStateController() {}
 
-    void set_K(float _K[][NUM_STATES]);
-    void set_state0(float _state0[]);
-    void set_u0(float _u0[]);
-    void set_desired_altitude(float _desired_altitude) { desired_altitude = _desired_altitude; }
+    void set_K(const float _K[][NUM_STATES]);
+    void set_state0(const float _state0[]);
+    void set_u0(const float _u0[]);
+    void set_desired_altitude(const float _desired_altitude) { desired_altitude = _desired_altitude; }
     float get_desired_altitude() { return desired_altitude; }
 
     float K[NUM_ROTORS][NUM_STATES];
@@ -51,15 +51,15 @@ public:
 class AP_TransitionController {
 public:
     AP_TransitionController() { num_steps = 0; }
-    AP_TransitionController(float _K[][NUM_ROTORS][NUM_STATES], float _state0[][NUM_STATES],
-        float _u0[][NUM_ROTORS], uint32_t _timestamps_ms[], uint16_t _num_steps);
+    AP_TransitionController(const float _K[][NUM_ROTORS][NUM_STATES], const float _state0[][NUM_STATES],
+        const float _u0[][NUM_ROTORS], uint32_t _timestamps_ms[], uint16_t _num_steps);
     ~AP_TransitionController() {}
 
-    void set_K(float _K[][NUM_ROTORS][NUM_STATES], uint16_t _num_steps);
-    void set_state0(float _state0[][NUM_STATES], uint16_t _num_steps);
-    void set_u0(float _u0[][NUM_ROTORS], uint16_t _num_steps);
-    void set_timestamps(uint32_t _timestamp_ms[], uint16_t _num_steps);
-    void set_initial_altitude(float _initial_altitude);
+    void set_K(const float _K[][NUM_ROTORS][NUM_STATES], uint16_t _num_steps);
+    void set_state0(const float _state0[][NUM_STATES], uint16_t _num_steps);
+    void set_u0(const float _u0[][NUM_ROTORS], uint16_t _num_steps);
+    void set_timestamps(const uint32_t _timestamp_ms[], uint16_t _num_steps);
+    void set_initial_altitude(const float _initial_altitude);
     bool get_controller(uint32_t transition_time, float _K[][NUM_STATES], float _state0[], float _u0[]);
 
     float K[MAX_STEPS][NUM_ROTORS][NUM_STATES];

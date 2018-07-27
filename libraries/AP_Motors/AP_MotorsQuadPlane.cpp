@@ -7,12 +7,12 @@
 
 extern const AP_HAL::HAL& hal;
 
-void copy_array(float* dst, float* src, uint16_t N) {
+void copy_array(float* dst, const float* src, uint16_t N) {
     for (uint16_t i = 0;i < N;++i)
         dst[i] = src[i];
 }
 
-void copy_array(uint32_t* dst, uint32_t* src, uint16_t N) {
+void copy_array(uint32_t* dst, const uint32_t* src, uint16_t N) {
     for (uint16_t i = 0;i < N;++i)
         dst[i] = src[i];
 }
@@ -50,28 +50,28 @@ void stateDiff(float state1[], float state2[], float diff[]) {
         diff[i] = warp_radian(diff[i]);
 }
 
-AP_TrimStateController::AP_TrimStateController(float _K[][NUM_STATES], 
-    float _state0[], float _u0[]) {
+AP_TrimStateController::AP_TrimStateController(const float _K[][NUM_STATES], 
+    const float _state0[], const float _u0[]) {
     
     copy_array(K[0], _K[0], NUM_ROTORS * NUM_STATES);
     copy_array(state0, _state0, NUM_STATES);
     copy_array(u0, _u0, NUM_ROTORS);
 }
 
-void AP_TrimStateController::set_K(float _K[][NUM_STATES]) {
+void AP_TrimStateController::set_K(const float _K[][NUM_STATES]) {
     copy_array(K[0], _K[0], NUM_ROTORS * NUM_STATES);
 }
 
-void AP_TrimStateController::set_state0(float _state0[]) {
+void AP_TrimStateController::set_state0(const float _state0[]) {
     copy_array(state0, _state0, NUM_STATES);
 }
 
-void AP_TrimStateController::set_u0(float _u0[]) {
+void AP_TrimStateController::set_u0(const float _u0[]) {
     copy_array(u0, _u0, NUM_ROTORS);
 }
 
-AP_TransitionController::AP_TransitionController(float _K[][NUM_ROTORS][NUM_STATES],
-    float _state0[][NUM_STATES], float _u0[][NUM_ROTORS], uint32_t _timestamp_ms[], 
+AP_TransitionController::AP_TransitionController(const float _K[][NUM_ROTORS][NUM_STATES],
+    const float _state0[][NUM_STATES], const float _u0[][NUM_ROTORS], uint32_t _timestamp_ms[], 
     uint16_t _num_steps) {
 
     if (_num_steps < 1) {
@@ -87,7 +87,7 @@ AP_TransitionController::AP_TransitionController(float _K[][NUM_ROTORS][NUM_STAT
     total_transition_time = _timestamp_ms[_num_steps - 1];
 }
 
-void AP_TransitionController::set_K(float _K[][NUM_ROTORS][NUM_STATES], uint16_t _num_steps) {
+void AP_TransitionController::set_K(const float _K[][NUM_ROTORS][NUM_STATES], uint16_t _num_steps) {
 
     if (_num_steps < 1 || (num_steps != 0 && _num_steps != num_steps)) {
         // something went wrong
@@ -98,7 +98,7 @@ void AP_TransitionController::set_K(float _K[][NUM_ROTORS][NUM_STATES], uint16_t
     copy_array(K[0][0], _K[0][0], _num_steps * NUM_ROTORS * NUM_STATES);
 }
 
-void AP_TransitionController::set_state0(float _state0[][NUM_STATES], uint16_t _num_steps) {
+void AP_TransitionController::set_state0(const float _state0[][NUM_STATES], uint16_t _num_steps) {
 
     if (_num_steps < 1 || (num_steps != 0 && _num_steps != num_steps)) {
         // something went wrong
@@ -109,7 +109,7 @@ void AP_TransitionController::set_state0(float _state0[][NUM_STATES], uint16_t _
     copy_array(state0[0], _state0[0], _num_steps * NUM_STATES);
 }
 
-void AP_TransitionController::set_u0(float _u0[][NUM_ROTORS], uint16_t _num_steps) {
+void AP_TransitionController::set_u0(const float _u0[][NUM_ROTORS], uint16_t _num_steps) {
 
     if (_num_steps < 1 || (num_steps != 0 && _num_steps != num_steps)) {
         // something went wrong
@@ -120,7 +120,7 @@ void AP_TransitionController::set_u0(float _u0[][NUM_ROTORS], uint16_t _num_step
     copy_array(u0[0], _u0[0], _num_steps * NUM_ROTORS);
 }
 
-void AP_TransitionController::set_timestamps(uint32_t _timestamp_ms[], uint16_t _num_steps) {
+void AP_TransitionController::set_timestamps(const uint32_t _timestamp_ms[], uint16_t _num_steps) {
 
     if (_num_steps < 1 || (num_steps != 0 && _num_steps != num_steps)) {
         // something went wrong
@@ -131,7 +131,7 @@ void AP_TransitionController::set_timestamps(uint32_t _timestamp_ms[], uint16_t 
     copy_array(timestamp_ms, _timestamp_ms, _num_steps);
 }
 
-void AP_TransitionController::set_initial_altitude(float _initial_altitude) {
+void AP_TransitionController::set_initial_altitude(const float _initial_altitude) {
     initial_altitude = _initial_altitude;
     index = 0;
 }
@@ -188,23 +188,23 @@ void AP_MotorsQuadPlane::setup_motors(motor_frame_class frame_class, motor_frame
 
 void AP_MotorsQuadPlane::setup_controllers() {
 
-    // controller_copter.set_K(COPTER_K);
-    // controller_copter.set_state0(COPTER_STATE0);
-    // controller_copter.set_u0(COPTER_U0);
+    controller_copter.set_K(COPTER_K);
+    controller_copter.set_state0(COPTER_STATE0);
+    controller_copter.set_u0(COPTER_U0);
     
-    // controller_gliding.set_K(GLIDING_K);
-    // controller_gliding.set_state0(GLIDING_STATE0);
-    // controller_gliding.set_u0(GLIDING_U0);
+    controller_gliding.set_K(GLIDING_K);
+    controller_gliding.set_state0(GLIDING_STATE0);
+    controller_gliding.set_u0(GLIDING_U0);
 
-    // controller_copter_to_gliding.set_K(COPTER_TO_GLIDING_K, NUM_STEPS_COPTER_TO_GLIDING);
-    // controller_copter_to_gliding.set_state0(COPTER_TO_GLIDING_STATE0, NUM_STEPS_COPTER_TO_GLIDING);
-    // controller_copter_to_gliding.set_u0(COPTER_TO_GLIDING_U0, NUM_STEPS_COPTER_TO_GLIDING);
-    // controller_copter_to_gliding.set_timestamps(COPTER_TO_GLIDING_TIMESTEPS, NUM_STEPS_COPTER_TO_GLIDING);
+    controller_copter_to_gliding.set_K(COPTER_TO_GLIDING_K, NUM_STEPS_COPTER_TO_GLIDING);
+    controller_copter_to_gliding.set_state0(COPTER_TO_GLIDING_STATE0, NUM_STEPS_COPTER_TO_GLIDING);
+    controller_copter_to_gliding.set_u0(COPTER_TO_GLIDING_U0, NUM_STEPS_COPTER_TO_GLIDING);
+    controller_copter_to_gliding.set_timestamps(COPTER_TO_GLIDING_TIMESTEPS, NUM_STEPS_COPTER_TO_GLIDING);
 
-    // controller_gliding_to_copter.set_K(GLIDING_TO_COPTER_K, NUM_STEPS_GLIDING_TO_COPTER);
-    // controller_gliding_to_copter.set_state0(GLIDING_TO_COPTER_STATE0, NUM_STEPS_GLIDING_TO_COPTER);
-    // controller_gliding_to_copter.set_u0(GLIDING_TO_COPTER_U0, NUM_STEPS_GLIDING_TO_COPTER);
-    // controller_gliding_to_copter.set_timestamps(GLIDING_TO_COPTER_TIMESTEPS, NUM_STEPS_GLIDING_TO_COPTER);
+    controller_gliding_to_copter.set_K(GLIDING_TO_COPTER_K, NUM_STEPS_GLIDING_TO_COPTER);
+    controller_gliding_to_copter.set_state0(GLIDING_TO_COPTER_STATE0, NUM_STEPS_GLIDING_TO_COPTER);
+    controller_gliding_to_copter.set_u0(GLIDING_TO_COPTER_U0, NUM_STEPS_GLIDING_TO_COPTER);
+    controller_gliding_to_copter.set_timestamps(GLIDING_TO_COPTER_TIMESTEPS, NUM_STEPS_GLIDING_TO_COPTER);
 }
 
 void AP_MotorsQuadPlane::output_to_motors() {
