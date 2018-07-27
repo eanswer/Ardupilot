@@ -99,6 +99,12 @@ public:
     // output_to_motors - sends output to named servos
     void output_to_motors() override;
 
+    void set_radio_switch(uint16_t switch_CH5, uint16_t switch_CH6) override;
+
+    uint8_t get_current_mode() { return current_mode; }
+
+    bool    get_in_transition() { return in_transition; }
+
 protected:
     // calculate motor outputs
     void output_armed_stabilizing() override;

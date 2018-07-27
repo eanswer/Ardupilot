@@ -264,9 +264,12 @@ void Copter::fast_loop()
     // run low level rate controllers that only require IMU data
     attitude_control->rate_controller_run();
 
+    // ----------------------------------------------------------------------
     // July, 2018
     // Jie Xu
     send_sensor_info_to_motor();
+    
+    // ----------------------------------------------------------------------
 
     // send outputs to the motors library immediately
     motors_output();
@@ -306,6 +309,7 @@ void Copter::fast_loop()
     }
 }
 
+// ----------------------------------------------------------------------
 // July, 2018
 // Jie Xu
 void Copter::send_sensor_info_to_motor() {
@@ -318,6 +322,12 @@ void Copter::send_sensor_info_to_motor() {
     motors->set_battery_voltage(battery.voltage());
 }
 
+void Copter::send_radio_info_to_motor() {
+    ::printf("current mode = %d, in_transition = %d\n", ((AP_MotorsQuadPlane*)motors)->get_current_mode(), ((AP_MotorsQuadPlane*)motors)->get_in_transition());
+    motors->set_radio_switch(RC_Channels::rc_channel(CH_5)->get_radio_in(), RC_Channels::rc_channel(CH_6)->get_radio_in());
+}
+// ----------------------------------------------------------------------
+
 // rc_loops - reads user input from transmitter/receiver
 // called at 100hz
 void Copter::rc_loop()
@@ -326,6 +336,9 @@ void Copter::rc_loop()
     // -----------------------------------------
     read_radio();
     read_control_switch();
+    // July, 2018
+    // Jie Xu
+    send_radio_info_to_motor();
 }
 
 // throttle_loop - should be run at 50 hz

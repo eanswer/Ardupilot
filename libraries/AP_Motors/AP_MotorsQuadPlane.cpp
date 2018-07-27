@@ -136,7 +136,7 @@ void AP_TransitionController::set_initial_altitude(const float _initial_altitude
     index = 0;
 }
 
-// return if transition ends
+// return if still in transition 
 bool AP_TransitionController::get_controller(uint32_t transition_time, float _K[][NUM_STATES], float _state0[], float _u0[]) {
     for (;index < num_steps - 1 && transition_time > (timestamp_ms[index] + timestamp_ms[index + 1]) / 2.0;) {
         ++ index;
@@ -276,16 +276,15 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
         uint32_t transition_time = AP_HAL::millis() - transition_start_time_ms;
 
         if (transition_direction == TRANSITION_COPTER_TO_GLIDING) {
-            in_transition = !controller_copter_to_gliding.get_controller(transition_time, K, state0, u0);
+            in_transition = controller_copter_to_gliding.get_controller(transition_time, K, state0, u0);
             if (!in_transition) {
                 controller_gliding.set_desired_altitude(controller_copter.get_desired_altitude());
             }
         } else if (transition_direction == TRANSITION_GLIDING_TO_COPTER) {
-            in_transition = !controller_gliding_to_copter.get_controller(transition_time, K, state0, u0);
+            in_transition = controller_gliding_to_copter.get_controller(transition_time, K, state0, u0);
         } else {
             // something went wrong
         }
-
         state[0] = state0[0]; state[1] = state0[1];
         state[5] = state0[5];
     } else if (current_mode == QUADPLANE_COPTER_MODE) {
@@ -366,18 +365,13 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
 
 void AP_MotorsQuadPlane::update_mode() {
 
-    uint8_t mode_switch = _switch_CH6_passthrough;
+    uint16_t mode_switch = _radio_switch_ch6;
     uint8_t input_mode;
 
-    switch (mode_switch) {
-        case 0:
-            input_mode = QUADPLANE_COPTER_MODE;
-            break;
-        case 1:
-            input_mode = QUADPLANE_GLIDING_MODE;
-            break;
-        default:
-            return;
+    if (mode_switch < 1300) {
+        input_mode = QUADPLANE_COPTER_MODE;
+    } else {
+        input_mode = QUADPLANE_GLIDING_MODE;
     }
 
     if (input_mode != current_mode) {
@@ -412,4 +406,9 @@ void AP_MotorsQuadPlane::getStateSpaceVector(float state[]) {
     Vector3f velocity_body = get_velocity_in_body_frame();
     state[6] = velocity_body.x; state[7] = velocity_body.y; state[8] = velocity_body.z;
     state[9] = roll_rate; state[10] = pitch_rate; state[11] = yaw_rate;
+}
+
+void AP_MotorsQuadPlane::set_radio_switch(uint16_t switch_CH5, uint16_t switch_CH6) {
+    _radio_switch_ch5 = switch_CH5;
+    _radio_switch_ch6 = switch_CH6;
 }

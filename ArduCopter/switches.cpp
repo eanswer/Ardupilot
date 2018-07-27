@@ -68,22 +68,6 @@ void Copter::read_control_switch()
     }
 
     control_switch_state.last_switch_position = switch_position;
-
-    // -----------------------------------------------------------------------
-    // July 25, 2018
-    // Jie Xu
-    // add switch CH6
-    int8_t switch_ch6_position;
-    uint16_t rc6_in = RC_Channels::rc_channel(CH_6)->get_radio_in();
-    if      (rc6_in < 1231) switch_ch6_position = 0;
-    else if (rc6_in < 1361) switch_ch6_position = 1;
-    else if (rc6_in < 1491) switch_ch6_position = 2;
-    else if (rc6_in < 1621) switch_ch6_position = 3;
-    else if (rc6_in < 1750) switch_ch6_position = 4;
-    else switch_ch6_position = 5;
-
-    motors->set_switch_passthrough(switch_position, switch_ch6_position);
-    // -----------------------------------------------------------------------
 }
 
 // check_if_auxsw_mode_used - Check to see if any of the Aux Switches are set to a given mode.

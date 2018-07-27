@@ -524,13 +524,15 @@ void Copter::set_default_frame_class()
         // July, 2018
         // Jie Xu
         // set default frame class to QUADPLANE_CFG
-        g2.frame_class.set(AP_Motors::MOTOR_FRAME_QUADPLANE_CFG);
+        // g2.frame_class.set(0);
     }
 }
 
 // return MAV_TYPE corresponding to frame class
 uint8_t Copter::get_frame_mav_type()
 {
+    // Jie Xu
+    // for debugging
     switch ((AP_Motors::motor_frame_class)g2.frame_class.get()) {
         // July, 2018
         // Jie Xu

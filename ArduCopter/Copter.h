@@ -639,6 +639,7 @@ private:
 // July, 2018
 // Jie Xu
     void send_sensor_info_to_motor();
+    void send_radio_info_to_motor();
 // --------------------------------------------------------------------
     void compass_accumulate(void);
     void compass_cal_update(void);

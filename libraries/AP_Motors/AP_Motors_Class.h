@@ -152,12 +152,13 @@ public:
     virtual uint16_t    get_motor_mask() = 0;
 
     // pilot input in the -1 ~ +1 range for roll, pitch and yaw. 0~1 range for throttle
-    void                set_radio_passthrough(float roll_input, float pitch_input, float throttle_input, float yaw_input);
+    virtual void        set_radio_passthrough(float roll_input, float pitch_input, float throttle_input, float yaw_input);
 
     // -------------------------------------------------------------------------------------------
     // July 25, 2018
     // Jie Xu
-    void                set_switch_passthrough(uint8_t switch_CH5, uint8_t switch_CH6);
+    virtual void        set_radio_rpyt(float radio_roll, float radio_pitch, float radio_throttle, float radio_yaw) {}
+    virtual void        set_radio_switch(uint16_t switch_CH5, uint16_t switch_CH6);
     void                set_attitude(float _roll, float _pitch, float _yaw);
     void                set_trig(float _sin_roll, float _sin_pitch, float _sin_yaw, float _cos_roll, float _cos_pitch, float _cos_yaw);
     void                set_attitude_rate(float _roll_rate, float _pitch_rate, float _yaw_rate);
@@ -233,8 +234,8 @@ protected:
     // --------------------------------------------------------------------------------------
     // July 25, 2018
     // Jie Xu
-    uint8_t _switch_CH5_passthrough = 0;
-    uint8_t _switch_CH6_passthrough = 0;
+    uint16_t _radio_switch_ch5 = 0;
+    uint16_t _radio_switch_ch6 = 0;
 
     float roll, pitch, yaw;
     float sin_roll, sin_pitch, sin_yaw;

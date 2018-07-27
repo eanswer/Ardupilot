@@ -78,12 +78,11 @@ void AP_Motors::set_radio_passthrough(float roll_input, float pitch_input, float
     _yaw_radio_passthrough = yaw_input;
 }
 
-// --------------------------------------------------------------------------------
 // July, 2018
 // Jie Xu
-void AP_Motors::set_switch_passthrough(uint8_t switch_CH5, uint8_t switch_CH6) {
-    _switch_CH5_passthrough = switch_CH5;
-    _switch_CH6_passthrough = switch_CH6;
+void AP_Motors::set_radio_switch(uint16_t switch_CH5, uint16_t switch_CH6) {
+    _radio_switch_ch5 = switch_CH5;
+    _radio_switch_ch6 = switch_CH6;
 }
 
 void AP_Motors::set_attitude(float _roll, float _pitch, float _yaw) {
