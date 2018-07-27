@@ -258,10 +258,10 @@ void AP_MotorsQuadPlane::output_to_motors() {
 
 void AP_MotorsQuadPlane::output_armed_stabilizing() {
 
-    float _roll_norm_in = _roll_radio_passthrough;
-    float _pitch_norm_in = _pitch_radio_passthrough;
-    float _yaw_norm_in = _yaw_radio_passthrough;
-    float _throttle_norm_in = _throttle_radio_passthrough;
+    float _roll_norm_in = radio_roll_in;
+    float _pitch_norm_in = radio_pitch_in;
+    float _yaw_norm_in = radio_yaw_in;
+    float _throttle_norm_in = radio_throttle_in;
     
     update_mode();
     
@@ -411,4 +411,11 @@ void AP_MotorsQuadPlane::getStateSpaceVector(float state[]) {
 void AP_MotorsQuadPlane::set_radio_switch(uint16_t switch_CH5, uint16_t switch_CH6) {
     _radio_switch_ch5 = switch_CH5;
     _radio_switch_ch6 = switch_CH6;
+}
+
+void AP_MotorsQuadPlane::set_radio_rpyt(float radio_roll, float radio_pitch, float radio_throttle, float radio_yaw) {
+    radio_roll_in = radio_roll; 
+    radio_pitch_in = radio_pitch; 
+    radio_throttle_in = radio_throttle;
+    radio_yaw_in = radio_yaw;
 }

@@ -236,7 +236,8 @@ protected:
     // Jie Xu
     uint16_t _radio_switch_ch5 = 0;
     uint16_t _radio_switch_ch6 = 0;
-
+    float radio_roll_in, radio_pitch_in, radio_throttle_in, radio_yaw_in;
+    
     float roll, pitch, yaw;
     float sin_roll, sin_pitch, sin_yaw;
     float cos_roll, cos_pitch, cos_yaw;

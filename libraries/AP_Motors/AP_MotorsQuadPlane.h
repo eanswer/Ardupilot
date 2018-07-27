@@ -100,10 +100,16 @@ public:
     void output_to_motors() override;
 
     void set_radio_switch(uint16_t switch_CH5, uint16_t switch_CH6) override;
+    void set_radio_rpyt(float radio_roll, float radio_pitch, float radio_throttle, float radio_yaw) override;
 
     uint8_t get_current_mode() { return current_mode; }
 
     bool    get_in_transition() { return in_transition; }
+
+    float get_radio_roll_in() { return radio_roll_in; }
+    float get_radio_pitch_in() { return radio_pitch_in; }
+    float get_radio_throttle_in() { return radio_throttle_in; }
+    float get_radio_yaw_in() { return radio_yaw_in; }
 
 protected:
     // calculate motor outputs
