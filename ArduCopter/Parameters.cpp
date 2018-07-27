@@ -983,14 +983,13 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     AP_SUBGROUPINFO(gripper, "GRIP_", 13, ParametersG2, AP_Gripper),
 #endif
 
-    // July 25, 2018
+    // July, 2018
     // Jie Xu
     // @Param: FRAME_CLASS
     // @DisplayName: Frame Class
     // @Description: Controls major frame class for multicopter component
-    // @Values: 0:Undefined, 1:Quad, 2:Hexa, 3:Octa, 4:OctaQuad, 5:Y6, 6:Heli, 7:Tri, 8:SingleCopter, 9:CoaxCopter, 12: QuadPlane_CFG
+    // @Values: 0:Undefined, 1:Quad, 2:Hexa, 3:Octa, 4:OctaQuad, 5:Y6, 6:Heli, 7:Tri, 8:SingleCopter, 9:CoaxCopter, 10:TailSitter, 11:HeliDual, 12: QuadPlane_CFG
     // @User: Standard
-    // AP_GROUPINFO("FRAME_CLASS", 15, ParametersG2, frame_class, 0),
     AP_GROUPINFO("FRAME_CLASS", 15, ParametersG2, frame_class, 12),
 
     // @Group: SERVO

@@ -580,6 +580,10 @@ const char* Copter::get_frame_string()
             return "COAX";
         case AP_Motors::MOTOR_FRAME_TAILSITTER:
             return "TAILSITTER";
+        // July, 2018
+        // Jie Xu
+        case AP_Motors::MOTOR_FRAME_QUADPLANE_CFG:
+            return "QUADPLANE";
         case AP_Motors::MOTOR_FRAME_UNDEFINED:
         default:
             return "UNKNOWN";
