@@ -187,7 +187,7 @@ public:
 
         // 97: RSSI
         k_param_rssi = 97,
-                
+
         //
         // 100: Inertial Nav
         //
