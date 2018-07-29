@@ -168,6 +168,14 @@ void Copter::init_ardupilot()
     log_init();
 #endif
 
+    // -----------------------------------------------------------------
+    // July, 2018
+    // Jie Xu
+    // init airspeed sensor
+    airspeed.init();
+    ahrs.set_sirspeed(&airspeed);
+    // -----------------------------------------------------------------
+
     // update motor interlock state
     update_using_interlock();
 
@@ -351,6 +359,16 @@ void Copter::startup_INS_ground()
 
     // reset ahrs including gyro bias
     ahrs.reset();
+
+    // July, 2018
+    // Jie Xu
+    if (airspeed.enabled()) {
+        // initialize airspeed sensor
+        // --------------------------
+        zero_airspeed(true);
+    } else {
+        gcs_send_text(MAV_SEVERITY_WARNING,"No airspeed");
+    }
 }
 
 // calibrate gyros - returns true if successfully calibrated

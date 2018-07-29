@@ -147,6 +147,45 @@ void Copter::update_optical_flow(void)
 }
 #endif  // OPTFLOW == ENABLED
 
+// ---------------------------------------------------------------------------------
+// July, 2018
+// Jie Xu
+// Airspeed related functions
+void Copter::read_airspeed(void)
+{
+    if (airspeed.enabled()) {
+        airspeed.read();
+        if (should_log(MASK_LOG_IMU)) {
+            // TODO: log airspeed
+            // Log_Write_Airspeed();
+        }
+        calc_airspeed_errors();
+
+        // supply a new temperature to the barometer from the digital
+        // airspeed sensor if we can
+        float temperature;
+        if (airspeed.get_temperature(temperature)) {
+            barometer.set_external_temperature(temperature);
+        }
+    }
+
+    // update smoothed airspeed estimate
+    float aspeed;
+    if (ahrs.airspeed_estimate(&aspeed)) {
+        smoothed_airspeed = smoothed_airspeed * 0.8f + aspeed * 0.2f;
+    }
+}
+
+void Copter::zero_airspeed(bool in_startup)
+{
+    airspeed.calibrate(in_startup);
+    read_airspeed();
+    // update barometric calibration with new airspeed supplied temperature
+    barometer.update_calibration();
+    gcs_send_text(MAV_SEVERITY_INFO,"Airspeed calibration started");
+}
+// ---------------------------------------------------------------------------------
+
 // read_battery - check battery voltage and current and invoke failsafe if necessary
 // called at 10hz
 void Copter::read_battery(void)

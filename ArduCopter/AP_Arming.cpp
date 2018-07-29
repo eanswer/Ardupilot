@@ -84,7 +84,11 @@ bool AP_Arming_Copter::pre_arm_checks(bool display_failure)
         & logging_checks(display_failure)
         & parameter_checks(display_failure)
         & motor_checks(display_failure)
-        & pilot_throttle_checks(display_failure);
+        & pilot_throttle_checks(display_failure)
+        // July, 2018
+        // Jie Xu
+        // Airspeed check
+        & AP_Arming::airspeed_checks(display_failure);
 }
 
 bool AP_Arming_Copter::rc_calibration_checks(bool display_failure)

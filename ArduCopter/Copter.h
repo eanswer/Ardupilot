@@ -481,6 +481,21 @@ private:
     // turn rate (in cds) when auto_yaw_mode is set to AUTO_YAW_RATE
     float auto_yaw_rate_cds;
 
+    // -----------------------------------------------------------------------------
+    // July, 2018
+    // Jie Xu
+    // Airspeed related variables
+    // The calculated airspeed to use in FBW-B.  Also used in higher modes for insuring min ground speed is met.
+    // Also used for flap deployment criteria.  Centimeters per second.
+    int32_t target_airspeed_cm;
+
+    // a smoothed airspeed estimate, used for limiting roll angle
+    float smoothed_airspeed;
+    
+    // Airspeed Sensors
+    AP_Airspeed airspeed;
+    // -----------------------------------------------------------------------------
+
     // Delay Mission Scripting Command
     int32_t condition_value;  // used in condition commands (eg delay, change alt, etc.)
     uint32_t condition_start;
@@ -1155,6 +1170,17 @@ private:
     void dataflash_periodic(void);
     void accel_cal_update(void);
 
+    // -----------------------------------------------------------------------
+    // July, 2018
+    // Jie Xu
+    // Airspeed related functions
+    void gcs_send_airspeed_calibration(const Vector3f &vg) {}
+    void calc_airspeed_errors() {}
+    void read_airspeed(void);
+    void zero_airspeed(bool in_startup);
+    void airspeed_ratio_update(void) {};
+    int8_t test_airspeed(uint8_t argc, const Menu::arg *argv);
+    // -----------------------------------------------------------------------
 public:
     void mavlink_delay_cb();
     void failsafe_check();
