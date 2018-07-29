@@ -23,6 +23,7 @@ class Copter;
 #define MAX_GLIDING_ALTITUDE_RATE 2
 #define GLIDING_ROLL_TO_YAW_MIXING 1
 #define GLIDING_ALTITUDE_RATE_COEF 0.0125
+#define MAX_PWM 1900
 
 #ifndef PI
     #define PI 3.1415927
@@ -101,17 +102,26 @@ public:
 
     void set_radio_switch(uint16_t switch_CH5, uint16_t switch_CH6) override;
     void set_radio_rpyt(float radio_roll, float radio_pitch, float radio_throttle, float radio_yaw) override;
+    void set_attitude(float _roll, float _pitch, float _yaw) override;
+    void set_trig(float _sin_roll, float _sin_pitch, float _sin_yaw, float _cos_roll, float _cos_pitch, float _cos_yaw) override;
+    void set_attitude_rate(float _roll_rate, float _pitch_rate, float _yaw_rate) override;
+    void set_altitude(float _altitude) override;
+    void set_ned_velocity(Vector3f _ned_velocity) override;
+    void set_airspeed(float _airspeed) override;
+    void set_battery_voltage(float _voltage) override;
 
     uint8_t get_current_mode() { return current_mode; }
-
     bool    get_in_transition() { return in_transition; }
-
     float get_radio_roll_in() { return radio_roll_in; }
     float get_radio_pitch_in() { return radio_pitch_in; }
     float get_radio_throttle_in() { return radio_throttle_in; }
     float get_radio_yaw_in() { return radio_yaw_in; }
 
 protected:
+    // thrust to pwm mappings
+    int16_t thrust_to_pwm_mapping_front(float desired_thrust, float voltage);
+    int16_t thrust_to_pwm_mapping_quad(float desired_thrust, float voltage);
+
     // calculate motor outputs
     void output_armed_stabilizing() override;
     void thrust_compensation(void) override {}
@@ -121,6 +131,23 @@ protected:
     void getStateSpaceVector(float state[]);
 
 private:
+    // --------------------------------------------------------------------------------------
+    // July 25, 2018
+    // Jie Xu
+    uint16_t _radio_switch_ch5 = 0;
+    uint16_t _radio_switch_ch6 = 0;
+    float radio_roll_in, radio_pitch_in, radio_throttle_in, radio_yaw_in;
+    
+    float roll, pitch, yaw;
+    float sin_roll, sin_pitch, sin_yaw;
+    float cos_roll, cos_pitch, cos_yaw;
+    float roll_rate, pitch_rate, yaw_rate;
+    float altitude;
+    Vector3f ned_velocity;
+    float airspeed;
+    float battery_voltage;
+    // --------------------------------------------------------------------------------------
+
     uint8_t     current_mode;
     bool        in_transition;
     uint8_t     transition_direction;

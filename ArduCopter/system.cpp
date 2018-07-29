@@ -173,7 +173,7 @@ void Copter::init_ardupilot()
     // Jie Xu
     // init airspeed sensor
     airspeed.init();
-    ahrs.set_sirspeed(&airspeed);
+    ahrs.set_airspeed(&airspeed);
     // -----------------------------------------------------------------
 
     // update motor interlock state

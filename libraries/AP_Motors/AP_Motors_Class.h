@@ -158,13 +158,14 @@ public:
     // July 25, 2018
     // Jie Xu
     virtual void        set_radio_rpyt(float radio_roll, float radio_pitch, float radio_throttle, float radio_yaw) {}
-    virtual void        set_radio_switch(uint16_t switch_CH5, uint16_t switch_CH6);
-    void                set_attitude(float _roll, float _pitch, float _yaw);
-    void                set_trig(float _sin_roll, float _sin_pitch, float _sin_yaw, float _cos_roll, float _cos_pitch, float _cos_yaw);
-    void                set_attitude_rate(float _roll_rate, float _pitch_rate, float _yaw_rate);
-    void                set_altitude(float _altitude);
-    void                set_ned_velocity(Vector3f _ned_velocity);
-    void                set_battery_voltage(float _voltage);
+    virtual void        set_radio_switch(uint16_t switch_CH5, uint16_t switch_CH6) {}
+    virtual void        set_attitude(float _roll, float _pitch, float _yaw) {}
+    virtual void        set_trig(float _sin_roll, float _sin_pitch, float _sin_yaw, float _cos_roll, float _cos_pitch, float _cos_yaw) {}
+    virtual void        set_attitude_rate(float _roll_rate, float _pitch_rate, float _yaw_rate) {}
+    virtual void        set_altitude(float _altitude) {}
+    virtual void        set_ned_velocity(Vector3f _ned_velocity) {}
+    virtual void        set_airspeed(float _airspeed) {}
+    virtual void        set_battery_voltage(float _voltage) {}
     // -------------------------------------------------------------------------------------------
 
     // set loop rate. Used to support loop rate as a parameter
@@ -231,21 +232,6 @@ protected:
     float _pitch_radio_passthrough = 0.0f;    // pitch input from pilot in -1 ~ +1 range.  used for setup and providing servo feedback while landed
     float _throttle_radio_passthrough = 0.0f; // throttle/collective input from pilot in 0 ~ 1 range.  used for setup and providing servo feedback while landed
     float _yaw_radio_passthrough = 0.0f;      // yaw input from pilot in -1 ~ +1 range.  used for setup and providing servo feedback while landed
-    // --------------------------------------------------------------------------------------
-    // July 25, 2018
-    // Jie Xu
-    uint16_t _radio_switch_ch5 = 0;
-    uint16_t _radio_switch_ch6 = 0;
-    float radio_roll_in, radio_pitch_in, radio_throttle_in, radio_yaw_in;
-    
-    float roll, pitch, yaw;
-    float sin_roll, sin_pitch, sin_yaw;
-    float cos_roll, cos_pitch, cos_yaw;
-    float roll_rate, pitch_rate, yaw_rate;
-    float altitude;
-    Vector3f ned_velocity;
-    float battery_voltage;
-    // --------------------------------------------------------------------------------------
     
     AP_Int8             _pwm_type;            // PWM output type
 };

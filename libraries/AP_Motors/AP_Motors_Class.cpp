@@ -78,50 +78,6 @@ void AP_Motors::set_radio_passthrough(float roll_input, float pitch_input, float
     _yaw_radio_passthrough = yaw_input;
 }
 
-// July, 2018
-// Jie Xu
-void AP_Motors::set_radio_switch(uint16_t switch_CH5, uint16_t switch_CH6) {
-    _radio_switch_ch5 = switch_CH5;
-    _radio_switch_ch6 = switch_CH6;
-}
-
-void AP_Motors::set_attitude(float _roll, float _pitch, float _yaw) {
-    roll = _roll;
-    pitch = _pitch;
-    yaw = _yaw;
-}
-
-void AP_Motors::set_trig(float _sin_roll, float _sin_pitch, float _sin_yaw, 
-    float _cos_roll, float _cos_pitch, float _cos_yaw) {
-    sin_roll = _sin_roll;
-    sin_pitch = _sin_pitch;
-    sin_yaw = _sin_yaw;
-    cos_roll = _cos_roll;
-    cos_pitch = _cos_pitch;
-    cos_yaw = _cos_yaw;
-}
-
-void AP_Motors::set_attitude_rate(float _roll_rate, float _pitch_rate, float _yaw_rate) {
-    roll_rate = _roll_rate;
-    pitch_rate = _pitch_rate;
-    yaw_rate = _yaw_rate;
-}
-
-void AP_Motors::set_altitude(float _altitude) {
-    altitude = _altitude;
-}
-
-void AP_Motors::set_ned_velocity(Vector3f _ned_velocity) {
-    ned_velocity.x = _ned_velocity.x;
-    ned_velocity.y = _ned_velocity.y;
-    ned_velocity.z = _ned_velocity.z;
-}
-
-void AP_Motors::set_battery_voltage(float _voltage) {
-    battery_voltage = _voltage;
-}
-// --------------------------------------------------------------------------------
-
 /*
   write to an output channel
  */

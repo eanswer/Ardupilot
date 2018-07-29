@@ -1179,7 +1179,6 @@ private:
     void read_airspeed(void);
     void zero_airspeed(bool in_startup);
     void airspeed_ratio_update(void) {};
-    int8_t test_airspeed(uint8_t argc, const Menu::arg *argv);
     // -----------------------------------------------------------------------
 public:
     void mavlink_delay_cb();
@@ -1205,7 +1204,13 @@ public:
     int8_t test_relay(uint8_t argc, const Menu::arg *argv);
     int8_t test_shell(uint8_t argc, const Menu::arg *argv);
     int8_t test_rangefinder(uint8_t argc, const Menu::arg *argv);
-
+    // -------------------------------------------------------------------------
+    // July, 2018
+    // Jie Xu
+    // Airspeed tester
+    int8_t test_airspeed(uint8_t argc, const Menu::arg *argv);
+    // -------------------------------------------------------------------------
+    
     int8_t reboot_board(uint8_t argc, const Menu::arg *argv);
 };
 

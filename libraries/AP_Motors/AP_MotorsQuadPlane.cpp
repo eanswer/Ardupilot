@@ -242,7 +242,14 @@ void AP_MotorsQuadPlane::output_to_motors() {
             for (i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
                 if (motor_enabled[i]) {
                     // TODO: modify
-                    motor_out[i] = calc_thrust_to_pwm(_thrust_rpyt_out[i]);
+                    // motor_out[i] = calc_thrust_to_pwm(_thrust_rpyt_out[i]);
+                    if (i == 0) {
+                        // motor 1 is the front motor
+                        motor_out[i] = thrust_to_pwm_mapping_front(_thrust_rpyt_out[i], battery_voltage);
+                    } else {
+                        // motor 2~5 is quad motors
+                        motor_out[i] = thrust_to_pwm_mapping_quad(_thrust_rpyt_out[i], battery_voltage);
+                    }
                 }
             }
             break;
@@ -254,6 +261,78 @@ void AP_MotorsQuadPlane::output_to_motors() {
             rc_write(i, motor_out[i]);
         }
     }
+}
+
+int16_t AP_MotorsQuadPlane::thrust_to_pwm_mapping_front(float desired_thrust, float voltage) {
+    // Reject unreasonable data.
+    if (desired_thrust <= 0.0f || voltage <= 7.5f || voltage >= 13.0f) return 1000.0f;
+    // Output from matlab:
+    /*
+    Linear model Poly21:
+    a(x,y) = p00 + p10*x + p01*y + p20*x^2 + p11*x*y
+      where x is normalized by mean 1425 and std 201.8
+      and where y is normalized by mean 11.38 and std 0.3678
+    Coefficients (with 95% confidence bounds):
+      p00 =         3.4  (3.375, 3.424)
+      p10 =       3.324  (3.306, 3.341)
+      p01 =      0.2254  (0.2078, 0.2431)
+      p20 =      0.7846  (0.7648, 0.8043)
+      p11 =      0.1704  (0.1526, 0.1883)
+    */
+    const float mean_throttle = 1425.0f;
+    const float std_throttle = 201.8140f;
+    const float mean_voltage = 11.3775f;
+    const float std_voltage = 0.3678f;
+    const float p00 = 3.4f;
+    const float p10 = 3.324f;
+    const float p01 = 0.2254f;
+    const float p20 = 0.7846f;
+    const float p11 = 0.1704f;
+    const float y = (voltage - mean_voltage) / std_voltage;
+    const float a = p20;
+    const float b = p11 * y + p10;
+    const float c = p01 * y + p00 - desired_thrust;
+    const float delta = b * b - 4 * a * c;
+    if (delta < 0.0f) return 1000.0f;
+    const float x = (-b + sqrtf(delta)) / 2.0f / a;
+    const float throttle = x * std_throttle + mean_throttle;
+    return clamp(throttle, 1000.0f, MAX_PWM);
+}
+
+int16_t AP_MotorsQuadPlane::thrust_to_pwm_mapping_quad(float desired_thrust, float voltage) {
+    // Reject unreasonable data.
+    if (desired_thrust <= 0.0f || voltage <= 7.5f || voltage >= 13.0f) return 1000.0f;
+    // Output from matlab:
+    /*
+    Linear model Poly21:
+    a(x,y) = p00 + p10*x + p01*y + p20*x^2 + p11*x*y
+      where x is normalized by mean 1425 and std 201.8
+      and where y is normalized by mean 11.38 and std 0.3678
+    Coefficients (with 95% confidence bounds):
+      p00 =         3.4  (3.375, 3.424)
+      p10 =       3.324  (3.306, 3.341)
+      p01 =      0.2254  (0.2078, 0.2431)
+      p20 =      0.7846  (0.7648, 0.8043)
+      p11 =      0.1704  (0.1526, 0.1883)
+    */
+    const float mean_throttle = 1425.0f;
+    const float std_throttle = 201.8140f;
+    const float mean_voltage = 11.3775f;
+    const float std_voltage = 0.3678f;
+    const float p00 = 3.4f;
+    const float p10 = 3.324f;
+    const float p01 = 0.2254f;
+    const float p20 = 0.7846f;
+    const float p11 = 0.1704f;
+    const float y = (voltage - mean_voltage) / std_voltage;
+    const float a = p20;
+    const float b = p11 * y + p10;
+    const float c = p01 * y + p00 - desired_thrust;
+    const float delta = b * b - 4 * a * c;
+    if (delta < 0.0f) return 1000.0f;
+    const float x = (-b + sqrtf(delta)) / 2.0f / a;
+    const float throttle = x * std_throttle + mean_throttle;
+    return clamp(throttle, 1000.0f, MAX_PWM);
 }
 
 void AP_MotorsQuadPlane::output_armed_stabilizing() {
@@ -394,6 +473,12 @@ float AP_MotorsQuadPlane::get_altitude() {
 
 Vector3f AP_MotorsQuadPlane::get_velocity_in_body_frame() {
     float v_x_b = ned_velocity.y * sin_yaw + ned_velocity.x * cos_yaw;
+    const float x_velocity_threshold = 2;
+    if (current_mode == QUADPLANE_COPTER_MODE || v_x_b < x_velocity_threshold) {
+        // if speed is slow, use accelerometer's estimation
+    } else {
+        v_x_b = airspeed;
+    }
     float v_y_b = ned_velocity.y * cos_yaw - ned_velocity.x * sin_yaw;
     Vector3f velocity_body(v_x_b, v_y_b, ned_velocity.z);
     return velocity_body;
@@ -408,6 +493,7 @@ void AP_MotorsQuadPlane::getStateSpaceVector(float state[]) {
     state[9] = roll_rate; state[10] = pitch_rate; state[11] = yaw_rate;
 }
 
+// Set functions
 void AP_MotorsQuadPlane::set_radio_switch(uint16_t switch_CH5, uint16_t switch_CH6) {
     _radio_switch_ch5 = switch_CH5;
     _radio_switch_ch6 = switch_CH6;
@@ -418,4 +504,44 @@ void AP_MotorsQuadPlane::set_radio_rpyt(float radio_roll, float radio_pitch, flo
     radio_pitch_in = radio_pitch; 
     radio_throttle_in = radio_throttle;
     radio_yaw_in = radio_yaw;
+}
+
+void AP_MotorsQuadPlane::set_attitude(float _roll, float _pitch, float _yaw) {
+    roll = _roll;
+    pitch = _pitch;
+    yaw = _yaw;
+}
+
+void AP_MotorsQuadPlane::set_trig(float _sin_roll, float _sin_pitch, float _sin_yaw, 
+    float _cos_roll, float _cos_pitch, float _cos_yaw) {
+    sin_roll = _sin_roll;
+    sin_pitch = _sin_pitch;
+    sin_yaw = _sin_yaw;
+    cos_roll = _cos_roll;
+    cos_pitch = _cos_pitch;
+    cos_yaw = _cos_yaw;
+}
+
+void AP_MotorsQuadPlane::set_attitude_rate(float _roll_rate, float _pitch_rate, float _yaw_rate) {
+    roll_rate = _roll_rate;
+    pitch_rate = _pitch_rate;
+    yaw_rate = _yaw_rate;
+}
+
+void AP_MotorsQuadPlane::set_altitude(float _altitude) {
+    altitude = _altitude;
+}
+
+void AP_MotorsQuadPlane::set_ned_velocity(Vector3f _ned_velocity) {
+    ned_velocity.x = _ned_velocity.x;
+    ned_velocity.y = _ned_velocity.y;
+    ned_velocity.z = _ned_velocity.z;
+}
+
+void AP_MotorsQuadPlane::set_airspeed(float _airspeed) {
+    airspeed = _airspeed;
+}
+
+void AP_MotorsQuadPlane::set_battery_voltage(float _voltage) {
+    battery_voltage = _voltage;
 }
