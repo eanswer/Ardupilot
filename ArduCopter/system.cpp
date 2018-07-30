@@ -542,7 +542,7 @@ void Copter::set_default_frame_class()
         // July, 2018
         // Jie Xu
         // set default frame class to QUADPLANE_CFG
-        // g2.frame_class.set(0);
+        g2.frame_class.set(12);
     }
 }
 

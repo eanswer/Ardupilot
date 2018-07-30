@@ -112,10 +112,10 @@ public:
 
     uint8_t get_current_mode() { return current_mode; }
     bool    get_in_transition() { return in_transition; }
-    float get_radio_roll_in() { return radio_roll_in; }
-    float get_radio_pitch_in() { return radio_pitch_in; }
-    float get_radio_throttle_in() { return radio_throttle_in; }
-    float get_radio_yaw_in() { return radio_yaw_in; }
+    float   get_radio_roll_in() { return radio_roll_in; }
+    float   get_radio_pitch_in() { return radio_pitch_in; }
+    float   get_radio_throttle_in() { return radio_throttle_in; }
+    float   get_radio_yaw_in() { return radio_yaw_in; }
 
 protected:
     // thrust to pwm mappings
@@ -149,7 +149,7 @@ private:
     // --------------------------------------------------------------------------------------
 
     uint8_t     current_mode;
-    bool        in_transition;
+    bool        in_transition; 
     uint8_t     transition_direction;
     uint32_t    transition_start_time_ms;
     AP_TrimStateController  controller_copter;

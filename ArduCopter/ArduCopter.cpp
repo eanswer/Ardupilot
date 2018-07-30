@@ -323,7 +323,6 @@ void Copter::send_sensor_info_to_motor() {
 }
 
 void Copter::send_radio_info_to_motor() {
-    // ::printf("current mode = %d, in_transition = %d\n", ((AP_MotorsQuadPlane*)motors)->get_current_mode(), ((AP_MotorsQuadPlane*)motors)->get_in_transition());
     // ::printf("%.3f %.3f %.3f %.3f\n", ((AP_MotorsQuadPlane*)motors)->get_radio_roll_in(), ((AP_MotorsQuadPlane*)motors)->get_radio_pitch_in(), ((AP_MotorsQuadPlane*)motors)->get_radio_throttle_in(), ((AP_MotorsQuadPlane*)motors)->get_radio_yaw_in());
     motors->set_radio_rpyt(channel_roll->norm_input(), channel_pitch->norm_input(), channel_throttle->get_control_in_zero_dz()*0.001, channel_yaw->norm_input());
     motors->set_radio_switch(RC_Channels::rc_channel(CH_5)->get_radio_in(), RC_Channels::rc_channel(CH_6)->get_radio_in());
