@@ -116,7 +116,8 @@ public:
     float   get_radio_pitch_in() { return radio_pitch_in; }
     float   get_radio_throttle_in() { return radio_throttle_in; }
     float   get_radio_yaw_in() { return radio_yaw_in; }
-
+    float   get_airspeed() { return airspeed; }
+    
 protected:
     // thrust to pwm mappings
     int16_t thrust_to_pwm_mapping_front(float desired_thrust, float voltage);
