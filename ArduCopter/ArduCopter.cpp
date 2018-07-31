@@ -324,8 +324,6 @@ void Copter::fast_loop()
  */
 void Copter::airspeed_ratio_update(void)
 {
-    ::printf("airspeed.enabled() = %d\n", airspeed.enabled());
-    ::printf("airspeed = %.3f\n", airspeed.get_airspeed());
     if (!airspeed.enabled() ||
         gps.status() < AP_GPS::GPS_OK_FIX_3D ||
         gps.ground_speed() < 4) {
@@ -368,7 +366,7 @@ void Copter::send_sensor_info_to_motor() {
     motors->set_ned_velocity(Vector3f(velocity_neu.x, velocity_neu.y, -velocity_neu.z));
     motors->set_battery_voltage(battery.voltage());
     motors->set_airspeed(airspeed.get_airspeed());
-    // ::printf("airspeed = %.3f\n", ((AP_MotorsQuadPlane*)motors)->get_airspeed());
+    ::printf("airspeed = %.3f\n", ((AP_MotorsQuadPlane*)motors)->get_airspeed());
 }
 
 void Copter::send_radio_info_to_motor() {

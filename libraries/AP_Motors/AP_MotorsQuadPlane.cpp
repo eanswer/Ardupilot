@@ -273,24 +273,24 @@ int16_t AP_MotorsQuadPlane::thrust_to_pwm_mapping_front(float desired_thrust, fl
     /*
     Linear model Poly21:
     a(x,y) = p00 + p10*x + p01*y + p20*x^2 + p11*x*y
-      where x is normalized by mean 1425 and std 201.8
-      and where y is normalized by mean 11.38 and std 0.3678
+      where x is normalized by mean 1521 and std 229.8086
+      and where y is normalized by mean 11.7657 and std 0.4164
     Coefficients (with 95% confidence bounds):
-      p00 =         3.4  (3.375, 3.424)
-      p10 =       3.324  (3.306, 3.341)
-      p01 =      0.2254  (0.2078, 0.2431)
-      p20 =      0.7846  (0.7648, 0.8043)
-      p11 =      0.1704  (0.1526, 0.1883)
+       p00 =        3.28  (3.26, 3.3)
+       p10 =       2.958  (2.939, 2.976)
+       p01 =      0.2289  (0.2103, 0.2475)
+       p20 =      0.6207  (0.6005, 0.6408)
+       p11 =      0.1894  (0.1713, 0.2074)
     */
-    const float mean_throttle = 1425.0f;
-    const float std_throttle = 201.8140f;
-    const float mean_voltage = 11.3775f;
-    const float std_voltage = 0.3678f;
-    const float p00 = 3.4f;
-    const float p10 = 3.324f;
-    const float p01 = 0.2254f;
-    const float p20 = 0.7846f;
-    const float p11 = 0.1704f;
+    const float mean_throttle = 1521.0f;
+    const float std_throttle = 229.8086f;
+    const float mean_voltage = 11.7657f;
+    const float std_voltage = 0.4164f;
+    const float p00 = 3.28f;
+    const float p10 = 2.958f;
+    const float p01 = 0.2289f;
+    const float p20 = 0.6207f;
+    const float p11 = 0.1894f;
     const float y = (voltage - mean_voltage) / std_voltage;
     const float a = p20;
     const float b = p11 * y + p10;
@@ -309,24 +309,24 @@ int16_t AP_MotorsQuadPlane::thrust_to_pwm_mapping_quad(float desired_thrust, flo
     /*
     Linear model Poly21:
     a(x,y) = p00 + p10*x + p01*y + p20*x^2 + p11*x*y
-      where x is normalized by mean 1425 and std 201.8
-      and where y is normalized by mean 11.38 and std 0.3678
+      where x is normalized by mean 1525 and std 230.9135
+      and where y is normalized by mean 11.6555 and std 0.3697
     Coefficients (with 95% confidence bounds):
-      p00 =         3.4  (3.375, 3.424)
-      p10 =       3.324  (3.306, 3.341)
-      p01 =      0.2254  (0.2078, 0.2431)
-      p20 =      0.7846  (0.7648, 0.8043)
-      p11 =      0.1704  (0.1526, 0.1883)
+       p00 =       2.365  (2.355, 2.376)
+       p10 =       2.171  (2.163, 2.178)
+       p01 =      0.1652  (0.1579, 0.1724)
+       p20 =      0.4747  (0.4666, 0.4828)
+       p11 =      0.1151  (0.1078, 0.1224)
     */
-    const float mean_throttle = 1425.0f;
-    const float std_throttle = 201.8140f;
-    const float mean_voltage = 11.3775f;
-    const float std_voltage = 0.3678f;
-    const float p00 = 3.4f;
-    const float p10 = 3.324f;
-    const float p01 = 0.2254f;
-    const float p20 = 0.7846f;
-    const float p11 = 0.1704f;
+    const float mean_throttle = 1525.0f;
+    const float std_throttle = 230.9135f;
+    const float mean_voltage = 11.6555f;
+    const float std_voltage = 0.3697f;
+    const float p00 = 2.365f;
+    const float p10 = 2.171f;
+    const float p01 = 0.1652f;
+    const float p20 = 0.4747f;
+    const float p11 = 0.1151f;
     const float y = (voltage - mean_voltage) / std_voltage;
     const float a = p20;
     const float b = p11 * y + p10;
