@@ -12,7 +12,7 @@
 
 class Copter;
 
-#define MAX_STEPS 100
+#define MAX_STEPS 40
 #define MIN_COPTER_ALTITUDE -3
 #define MAX_COPTER_ALTITUDE 5
 #define MIN_ROLL_PITCH_DEGREE -30

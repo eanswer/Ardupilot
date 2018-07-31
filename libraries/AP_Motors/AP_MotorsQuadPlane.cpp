@@ -37,9 +37,11 @@ float degree2radian(float degree) {
     return degree / 180.0f * PI;
 }
 
-float warp_radian(float radian) {
-    for (;radian > PI;) radian -= PI * 2.0f;
-    for (;radian < -PI;) radian += PI * 2.0f;
+float wrap_radian(float radian) {
+
+    if (radian > PI) radian -= PI * 2.0f;
+    if (radian < -PI) radian += PI * 2.0f;
+
     return radian;
 }
 
@@ -47,7 +49,7 @@ void stateDiff(float state1[], float state2[], float diff[]) {
     for (uint8_t i = 0;i < NUM_STATES;++i)
         diff[i] = state1[i] - state2[i];
     for (uint8_t i = 3;i < 6;++i)
-        diff[i] = warp_radian(diff[i]);
+        diff[i] = wrap_radian(diff[i]);
 }
 
 AP_TrimStateController::AP_TrimStateController(const float _K[][NUM_STATES], 
@@ -152,6 +154,7 @@ bool AP_TransitionController::get_controller(uint32_t transition_time, float _K[
     _state0[0] += -initial_altitude;
 
     return (transition_time < timestamp_ms[num_steps - 1]);
+    return true;
 }
 
 void AP_MotorsQuadPlane::init(motor_frame_class frame_class, motor_frame_type frame_type) {
