@@ -159,7 +159,7 @@ void Copter::read_airspeed(void)
             // TODO: log airspeed
             // Log_Write_Airspeed();
         }
-        calc_airspeed_errors();
+        // calc_airspeed_errors();
 
         // supply a new temperature to the barometer from the digital
         // airspeed sensor if we can

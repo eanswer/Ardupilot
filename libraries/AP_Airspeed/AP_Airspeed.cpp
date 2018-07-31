@@ -35,7 +35,7 @@ extern const AP_HAL::HAL &hal;
  #define ARSPD_DEFAULT_PIN 1
 #else
  #define ARSPD_DEFAULT_TYPE TYPE_I2C_MS4525
- #define ARSPD_DEFAULT_PIN 15
+ #define ARSPD_DEFAULT_PIN 65
 #endif
 
 #if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_DISCO
@@ -160,6 +160,7 @@ void AP_Airspeed::init()
         sensor = new AP_Airspeed_MS5525(*this);
         break;
     }
+
     if (sensor && !sensor->init()) {
         GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_INFO, "Airspeed init failed");
         delete sensor;

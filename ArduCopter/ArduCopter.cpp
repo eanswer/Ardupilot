@@ -109,6 +109,13 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
 #if FRAME_CONFIG == HELI_FRAME
     SCHED_TASK(check_dynamic_flight,  50,     75),
 #endif
+    // -------------------------------------------------------------
+    // July, 2018
+    // Jie Xu
+    // Schedule Airspeed task
+    SCHED_TASK(read_airspeed,          10,    100),
+    SCHED_TASK(airspeed_ratio_update,   1,    100),
+    // -------------------------------------------------------------
     SCHED_TASK(fourhundred_hz_logging,400,    50),
     SCHED_TASK(update_notify,         50,     90),
     SCHED_TASK(one_hz_loop,            1,    100),
@@ -308,6 +315,46 @@ void Copter::fast_loop()
         Log_Sensor_Health();
     }
 }
+// ----------------------------------------------------------------------
+// July, 2018
+// Jie Xu
+// Airspeed 
+/*
+  once a second update the airspeed calibration ratio
+ */
+void Copter::airspeed_ratio_update(void)
+{
+    ::printf("airspeed.enabled() = %d\n", airspeed.enabled());
+    ::printf("airspeed = %.3f\n", airspeed.get_airspeed());
+    if (!airspeed.enabled() ||
+        gps.status() < AP_GPS::GPS_OK_FIX_3D ||
+        gps.ground_speed() < 4) {
+        // don't calibrate when not moving
+        return;        
+    }
+    if (airspeed.get_airspeed() < 6.0f && 
+        gps.ground_speed() < (uint32_t)6) {
+        // don't calibrate when flying below the minimum airspeed. We
+        // check both airspeed and ground speed to catch cases where
+        // the airspeed ratio is way too low, which could lead to it
+        // never coming up again
+        return;
+    }
+    // TODO: Maybe Add it back for tailsitter
+    /*
+    if (labs(ahrs.roll_sensor) > roll_limit_cd ||
+        ahrs.pitch_sensor > aparm.pitch_limit_max_cd ||
+        ahrs.pitch_sensor < pitch_limit_min_cd) {
+        // don't calibrate when going beyond normal flight envelope
+        return;
+    }*/
+    const Vector3f &vg = gps.velocity();
+    airspeed.update_calibration(vg, 15);
+    gcs_send_airspeed_calibration(vg);
+}
+
+// ----------------------------------------------------------------------
+
 
 // ----------------------------------------------------------------------
 // July, 2018

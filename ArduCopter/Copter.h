@@ -1178,7 +1178,7 @@ private:
     void calc_airspeed_errors() {}
     void read_airspeed(void);
     void zero_airspeed(bool in_startup);
-    void airspeed_ratio_update(void) {};
+    void airspeed_ratio_update(void);
     // -----------------------------------------------------------------------
 public:
     void mavlink_delay_cb();
