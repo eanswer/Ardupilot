@@ -497,6 +497,15 @@ void Copter::ten_hz_logging_loop()
 #if FRAME_CONFIG == HELI_FRAME
     Log_Write_Heli();
 #endif
+// Aug, 2018
+// Jie Xu
+// write new logs
+    motors->get_state(state);
+    motors->get_state0(state0);
+    motors->get_stage(log_stage);
+    Log_Write_State();
+    Log_Write_State0();
+    Log_Write_Control();
 }
 
 // twentyfive_hz_logging - should be run at 25hz

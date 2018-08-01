@@ -166,6 +166,9 @@ public:
     virtual void        set_ned_velocity(Vector3f _ned_velocity) {}
     virtual void        set_airspeed(float _airspeed) {}
     virtual void        set_battery_voltage(float _voltage) {}
+    virtual void        get_state(float _state[]) {}
+    virtual void        get_state0(float _state0[]) {}
+    virtual void        get_stage(uint8_t &_stage) {}
     // -------------------------------------------------------------------------------------------
 
     // set loop rate. Used to support loop rate as a parameter

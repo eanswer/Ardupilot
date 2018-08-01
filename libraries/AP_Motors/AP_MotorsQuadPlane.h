@@ -117,7 +117,10 @@ public:
     float   get_radio_throttle_in() { return radio_throttle_in; }
     float   get_radio_yaw_in() { return radio_yaw_in; }
     float   get_airspeed() { return airspeed; }
-    
+    void   get_state(float _state[]);
+    void   get_state0(float _state0[]);
+    void   get_stage(uint8_t &_stage) { _stage = stage; }
+       
 protected:
     // thrust to pwm mappings
     int16_t thrust_to_pwm_mapping_front(float desired_thrust, float voltage);
@@ -147,6 +150,10 @@ private:
     Vector3f ned_velocity;
     float airspeed;
     float battery_voltage;
+
+    float last_state[12];
+    float last_state0[12];
+    uint8_t stage; // 0 for copter, 1 for gliding, 2 for copter->gliding, 3 for gliding->copter
     // --------------------------------------------------------------------------------------
 
     uint8_t     current_mode;

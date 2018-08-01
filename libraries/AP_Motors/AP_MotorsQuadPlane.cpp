@@ -358,11 +358,13 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
         uint32_t transition_time = AP_HAL::millis() - transition_start_time_ms;
 
         if (transition_direction == TRANSITION_COPTER_TO_GLIDING) {
+            stage = 2;
             in_transition = controller_copter_to_gliding.get_controller(transition_time, K, state0, u0);
             if (!in_transition) {
                 controller_gliding.set_desired_altitude(controller_copter.get_desired_altitude());
             }
         } else if (transition_direction == TRANSITION_GLIDING_TO_COPTER) {
+            stage = 3;
             in_transition = controller_gliding_to_copter.get_controller(transition_time, K, state0, u0);
         } else {
             // something went wrong
@@ -370,6 +372,7 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
         state[0] = state0[0]; state[1] = state0[1];
         state[5] = state0[5];
     } else if (current_mode == QUADPLANE_COPTER_MODE) {
+        stage = 1;
         // get state0
         for (uint8_t i = 0;i < NUM_STATES;++i)
             state0[i] = controller_copter.state0[i];
@@ -400,6 +403,7 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
         for (uint8_t i = 0;i < NUM_ROTORS;++i)
             u0[i] = controller_copter.u0[i];
     } else if (current_mode == QUADPLANE_GLIDING_MODE) {
+        stage = 1;
         // get state0
         for (uint8_t i = 0;i < NUM_STATES;++i)
             state0[i] = controller_gliding.state0[i];
@@ -427,6 +431,11 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
             u0[i] = controller_gliding.u0[i];
     } else {
         // something went wrong
+    }
+    // save info for logging
+    for (uint8_t i = 0;i < 12;++i) {
+        last_state[i] = state[i];
+        last_state0[i] = state0[i];
     }
 
     // compute _thrust_rpyt_out by LQR
@@ -547,4 +556,16 @@ void AP_MotorsQuadPlane::set_airspeed(float _airspeed) {
 
 void AP_MotorsQuadPlane::set_battery_voltage(float _voltage) {
     battery_voltage = _voltage;
+}
+
+void AP_MotorsQuadPlane::get_state(float _state[]) {
+    for (uint8_t i = 0;i < 12;++i) {
+        _state[i] = last_state[i];
+    }
+}
+
+void AP_MotorsQuadPlane::get_state0(float _state0[]) {
+    for (uint8_t i = 0;i < 12;++i) {
+        _state0[i] = last_state0[i];
+    }
 }

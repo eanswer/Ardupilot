@@ -481,6 +481,15 @@ private:
     // turn rate (in cds) when auto_yaw_mode is set to AUTO_YAW_RATE
     float auto_yaw_rate_cds;
 
+    // -------------------------------------------------------
+    // Aug, 2018
+    // Jie Xu
+    // variables for log
+    float state[12];
+    float state0[12];
+    uint8_t log_stage;
+    // -------------------------------------------------------
+
     // -----------------------------------------------------------------------------
     // July, 2018
     // Jie Xu
@@ -738,6 +747,14 @@ private:
     void do_erase_logs(void);
     void Log_Write_AutoTune(uint8_t axis, uint8_t tune_step, float meas_target, float meas_min, float meas_max, float new_gain_rp, float new_gain_rd, float new_gain_sp, float new_ddt);
     void Log_Write_AutoTuneDetails(float angle_cd, float rate_cds);
+    // --------------------------------------------
+    // Aug, 2018
+    // Jie Xu
+    // New Log MSG write functions
+    void Log_Write_State();
+    void Log_Write_State0();
+    void Log_Write_Control();
+    // --------------------------------------------
     void Log_Write_Current();
     void Log_Write_Optflow();
     void Log_Write_Nav_Tuning();

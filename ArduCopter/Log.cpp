@@ -209,6 +209,100 @@ void Copter::Log_Write_AutoTuneDetails(float angle_cd, float rate_cds)
 }
 #endif
 
+// ---------------------------------------------------------------------
+// Aug, 2018
+// Jie Xu
+// New Log Messages
+struct PACKED log_state {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float x;
+    float y;
+    float z;
+    float roll;
+    float pitch;
+    float yaw;
+    float vx_b;
+    float vy_b;
+    float vz_b;
+    float v_roll;
+    float v_pitch;
+    float v_yaw;
+};
+
+void Copter::Log_Write_State() {
+    struct log_state pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_STATE_MSG),
+        time_us : AP_HAL::micros64(),
+        x : state[0],
+        y : state[1],
+        z : state[2],
+        roll : state[3],
+        pitch : state[4],
+        yaw : state[5],
+        vx_b : state[6],
+        vy_b : state[7],
+        vz_b : state[8],
+        v_roll : state[9],
+        v_pitch : state[10],
+        v_yaw : state[11]
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+struct PACKED log_state0 {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float x0;
+    float y0;
+    float z0;
+    float roll0;
+    float pitch0;
+    float yaw0;
+    float vx_b0;
+    float vy_b0;
+    float vz_b0;
+    float v_roll0;
+    float v_pitch0;
+    float v_yaw0;
+};
+
+void Copter::Log_Write_State0() {
+    struct log_state0 pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_STATE_MSG),
+        time_us : AP_HAL::micros64(),
+        x0 : state0[0],
+        y0 : state0[1],
+        z0 : state0[2],
+        roll0 : state0[3],
+        pitch0 : state0[4],
+        yaw0 : state0[5],
+        vx_b0 : state0[6],
+        vy_b0 : state0[7],
+        vz_b0 : state0[8],
+        v_roll0 : state0[9],
+        v_pitch0 : state0[10],
+        v_yaw0 : state0[11]
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+struct PACKED log_control {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    uint8_t stage;
+};
+
+void Copter::Log_Write_Control() {
+    struct log_control pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_STATE_MSG),
+        time_us : AP_HAL::micros64(),
+        stage : log_stage,
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+// ---------------------------------------------------------------------
+
 // Write a Current data packet
 void Copter::Log_Write_Current()
 {
@@ -880,6 +974,15 @@ const struct LogStructure Copter::log_structure[] = {
       "THRO",  "QBffffbbbb",  "TimeUS,Stage,Vel,VelZ,Acc,AccEfZ,Throw,AttOk,HgtOk,PosOk" },
     { LOG_PROXIMITY_MSG, sizeof(log_Proximity),
       "PRX",   "QBfffffffffff","TimeUS,Health,D0,D45,D90,D135,D180,D225,D270,D315,DUp,CAn,CDis" },
+    // Aug, 2018
+    // Jie Xu
+    // New Log MSG
+    { LOG_STATE_MSG, sizeof(log_state),
+      "X", "Qffffffffffff", "TimesUS,x,y,z,roll,pitch,yaw,vx,vy,vz,v_roll,v_pitch,v_yaw" },
+    { LOG_STATE0_MSG, sizeof(log_state0),
+      "X0", "Qffffffffffff", "TimesUS,x,y,z,roll,pitch,yaw,vx,vy,vz,v_roll,v_pitch,v_yaw" },
+    { LOG_CONTROL_MSG, sizeof(log_state0),
+      "CTRL", "Q", "TimesUS,stage" },  
 };
 
 #if CLI_ENABLED == ENABLED

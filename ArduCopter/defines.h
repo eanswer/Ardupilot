@@ -319,6 +319,14 @@ enum DevOptions {
 #define LOG_GUIDEDTARGET_MSG            0x22
 #define LOG_THROW_MSG                   0x23
 #define LOG_PROXIMITY_MSG               0x24
+// -----------------------------------------------
+// Aug, 2018
+// Jie Xu
+// New Logs
+#define LOG_STATE_MSG                   0x25
+#define LOG_STATE0_MSG                  0x26
+#define LOG_CONTROL_MSG                 0x27
+// -----------------------------------------------
 
 #define MASK_LOG_ATTITUDE_FAST          (1<<0)
 #define MASK_LOG_ATTITUDE_MED           (1<<1)
