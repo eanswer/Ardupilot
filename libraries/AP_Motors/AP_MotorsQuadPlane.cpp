@@ -154,7 +154,6 @@ bool AP_TransitionController::get_controller(uint32_t transition_time, float _K[
     _state0[0] += -initial_altitude;
 
     return (transition_time < timestamp_ms[num_steps - 1]);
-    return true;
 }
 
 void AP_MotorsQuadPlane::init(motor_frame_class frame_class, motor_frame_type frame_type) {
@@ -194,10 +193,12 @@ void AP_MotorsQuadPlane::setup_controllers() {
     controller_copter.set_K(COPTER_K);
     controller_copter.set_state0(COPTER_STATE0);
     controller_copter.set_u0(COPTER_U0);
-    
+    controller_copter.set_desired_altitude(0);
+
     controller_gliding.set_K(GLIDING_K);
     controller_gliding.set_state0(GLIDING_STATE0);
     controller_gliding.set_u0(GLIDING_U0);
+    controller_gliding.set_desired_altitude(0);
 
     controller_copter_to_gliding.set_K(COPTER_TO_GLIDING_K, NUM_STEPS_COPTER_TO_GLIDING);
     controller_copter_to_gliding.set_state0(COPTER_TO_GLIDING_STATE0, NUM_STEPS_COPTER_TO_GLIDING);
@@ -244,7 +245,6 @@ void AP_MotorsQuadPlane::output_to_motors() {
             // set motor output based on thrust requests
             for (i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
                 if (motor_enabled[i]) {
-                    // TODO: modify
                     // motor_out[i] = calc_thrust_to_pwm(_thrust_rpyt_out[i]);
                     if (i == 0) {
                         // motor 1 is the front motor
@@ -372,7 +372,7 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
         state[0] = state0[0]; state[1] = state0[1];
         state[5] = state0[5];
     } else if (current_mode == QUADPLANE_COPTER_MODE) {
-        stage = 1;
+        stage = 0;
         // get state0
         for (uint8_t i = 0;i < NUM_STATES;++i)
             state0[i] = controller_copter.state0[i];
@@ -381,13 +381,14 @@ void AP_MotorsQuadPlane::output_armed_stabilizing() {
         float desired_altitude = remap(_throttle_norm_in, 0.0f, 1.0f, MIN_COPTER_ALTITUDE, MAX_COPTER_ALTITUDE);
         float desired_roll = remap(_roll_norm_in, -1.0f, 1.0f, degree2radian(MIN_ROLL_PITCH_DEGREE), degree2radian(MAX_ROLL_PITCH_DEGREE));
         float desired_pitch = remap(_pitch_norm_in, -1.0f, 1.0f, degree2radian(MIN_ROLL_PITCH_DEGREE), degree2radian(MAX_ROLL_PITCH_DEGREE));
-        float desired_yaw_rate = remap(_throttle_norm_in, -1.0f, 1.0f, degree2radian(MIN_YAW_RATE_DEGREE), degree2radian(MAX_YAW_RATE_DEGREE));
+        float desired_yaw_rate = remap(_yaw_norm_in, -1.0f, 1.0f, degree2radian(MIN_YAW_RATE_DEGREE), degree2radian(MAX_YAW_RATE_DEGREE));
 
         controller_copter.set_desired_altitude(desired_altitude);
 
+        // TODO: More consideration on sign of pitch
         state0[2] = -desired_altitude;
-        state0[3] = desired_roll;
-        state0[4] = desired_pitch;
+        state0[3] += desired_roll;
+        state0[4] += desired_pitch;
         state0[11] = desired_yaw_rate;
 
         state[0] = state0[0]; state[1] = state0[1];
