@@ -503,6 +503,7 @@ void Copter::ten_hz_logging_loop()
     motors->get_state(state);
     motors->get_state0(state0);
     motors->get_stage(log_stage);
+    
     Log_Write_State();
     Log_Write_State0();
     Log_Write_Control();

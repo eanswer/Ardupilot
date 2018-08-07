@@ -570,3 +570,8 @@ void AP_MotorsQuadPlane::get_state0(float _state0[]) {
         _state0[i] = last_state0[i];
     }
 }
+
+void AP_MotorsQuadPlane::get_desired_thrust(float _desired_thrust[]) {
+    for (uint8_t i = 0;i < NUM_ROTORS;++i)
+        _desired_thrust[i] = _thrust_rpyt_out[i];
+}

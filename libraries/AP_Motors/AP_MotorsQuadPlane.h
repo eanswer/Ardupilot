@@ -120,7 +120,8 @@ public:
     void   get_state(float _state[]);
     void   get_state0(float _state0[]);
     void   get_stage(uint8_t &_stage) { _stage = stage; }
-       
+    void   get_desired_thrust(float _desired_thrust[]);
+
 protected:
     // thrust to pwm mappings
     int16_t thrust_to_pwm_mapping_front(float desired_thrust, float voltage);

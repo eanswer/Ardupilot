@@ -269,7 +269,7 @@ struct PACKED log_state0 {
 
 void Copter::Log_Write_State0() {
     struct log_state0 pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_STATE_MSG),
+        LOG_PACKET_HEADER_INIT(LOG_STATE0_MSG),
         time_us : AP_HAL::micros64(),
         x0 : state0[0],
         y0 : state0[1],
@@ -290,14 +290,24 @@ void Copter::Log_Write_State0() {
 struct PACKED log_control {
     LOG_PACKET_HEADER;
     uint64_t time_us;
-    uint8_t stage;
+    uint16_t stage;
+    float desired_thrust1;
+    float desired_thrust2;
+    float desired_thrust3;
+    float desired_thrust4;
+    float desired_thrust5;
 };
 
 void Copter::Log_Write_Control() {
     struct log_control pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_STATE_MSG),
+        LOG_PACKET_HEADER_INIT(LOG_CONTROL_MSG),
         time_us : AP_HAL::micros64(),
         stage : log_stage,
+        desired_thrust1 : desired_thrust[0],
+        desired_thrust2 : desired_thrust[1],
+        desired_thrust3 : desired_thrust[2],
+        desired_thrust4 : desired_thrust[3],
+        desired_thrust5 : desired_thrust[4]
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -982,7 +992,7 @@ const struct LogStructure Copter::log_structure[] = {
     { LOG_STATE0_MSG, sizeof(log_state0),
       "X0", "Qffffffffffff", "TimesUS,x,y,z,roll,pitch,yaw,vx,vy,vz,v_roll,v_pitch,v_yaw" },
     { LOG_CONTROL_MSG, sizeof(log_state0),
-      "CTRL", "Q", "TimesUS,stage" },  
+      "MYCTR", "QHfffff", "TimesUS,stage,thrust1,thrust2,thrust3,thrust4,thrust5" },  
 };
 
 #if CLI_ENABLED == ENABLED
