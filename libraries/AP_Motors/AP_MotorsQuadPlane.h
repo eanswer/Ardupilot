@@ -121,7 +121,9 @@ public:
     void   get_state0(float _state0[]);
     void   get_stage(uint8_t &_stage) { _stage = stage; }
     void   get_desired_thrust(float _desired_thrust[]);
-
+    uint16_t get_call_flag() { return call_flag; }
+    float  get_battery() { return battery_voltage; }
+    
 protected:
     // thrust to pwm mappings
     int16_t thrust_to_pwm_mapping_front(float desired_thrust, float voltage);
@@ -155,6 +157,7 @@ private:
     float last_state[12];
     float last_state0[12];
     uint8_t stage; // 0 for copter, 1 for gliding, 2 for copter->gliding, 3 for gliding->copter
+    uint16_t call_flag;
     // --------------------------------------------------------------------------------------
 
     uint8_t     current_mode;

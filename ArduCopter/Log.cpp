@@ -296,6 +296,7 @@ struct PACKED log_control {
     float desired_thrust3;
     float desired_thrust4;
     float desired_thrust5;
+    uint16_t call_flag;
 };
 
 void Copter::Log_Write_Control() {
@@ -307,7 +308,8 @@ void Copter::Log_Write_Control() {
         desired_thrust2 : desired_thrust[1],
         desired_thrust3 : desired_thrust[2],
         desired_thrust4 : desired_thrust[3],
-        desired_thrust5 : desired_thrust[4]
+        desired_thrust5 : desired_thrust[4],
+        call_flag       : call_flag
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -988,11 +990,11 @@ const struct LogStructure Copter::log_structure[] = {
     // Jie Xu
     // New Log MSG
     { LOG_STATE_MSG, sizeof(log_state),
-      "X", "Qffffffffffff", "TimesUS,x,y,z,roll,pitch,yaw,vx,vy,vz,v_roll,v_pitch,v_yaw" },
+      "X1", "Qffffffffffff", "TimesUS,x,y,z,roll,pitch,yaw,vx,vy,vz,v_roll,v_pitch,v_yaw" },
     { LOG_STATE0_MSG, sizeof(log_state0),
       "X0", "Qffffffffffff", "TimesUS,x,y,z,roll,pitch,yaw,vx,vy,vz,v_roll,v_pitch,v_yaw" },
     { LOG_CONTROL_MSG, sizeof(log_state0),
-      "MYCTR", "QHfffff", "TimesUS,stage,thrust1,thrust2,thrust3,thrust4,thrust5" },  
+      "MCTR", "QHfffffH", "TimesUS,stage,thrust1,thrust2,thrust3,thrust4,thrust5,flag" }
 };
 
 #if CLI_ENABLED == ENABLED

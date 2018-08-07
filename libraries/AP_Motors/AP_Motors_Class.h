@@ -170,6 +170,8 @@ public:
     virtual void        get_state0(float _state0[]) {}
     virtual void        get_stage(uint8_t &_stage) {}
     virtual void        get_desired_thrust(float _desired_thrust[]) {}
+    virtual uint16_t    get_call_flag() { return 0; }
+    virtual float       get_battery() { return 0; }
     // -------------------------------------------------------------------------------------------
 
     // set loop rate. Used to support loop rate as a parameter

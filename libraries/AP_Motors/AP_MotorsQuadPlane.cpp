@@ -216,6 +216,7 @@ void AP_MotorsQuadPlane::output_to_motors() {
     int8_t i;
     int16_t motor_out[AP_MOTORS_MAX_NUM_MOTORS];    // final pwm values sent to the motor
 
+    call_flag = 0;
     switch (_spool_mode) {
         case SHUT_DOWN: {
             // sends minimum values out to the motors
@@ -242,6 +243,7 @@ void AP_MotorsQuadPlane::output_to_motors() {
         case SPOOL_UP:
         case THROTTLE_UNLIMITED:
         case SPOOL_DOWN:
+            call_flag = 1;
             // set motor output based on thrust requests
             for (i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
                 if (motor_enabled[i]) {
