@@ -126,8 +126,8 @@ void AP_MotorsMatrix::output_to_motors()
     }
 
     // send output to each motor
-    if (!_in_copter_mode && _thrust_rpyt_out[0] == 0.0f) {
-        motor_out[0] = get_pwm_output_min();
+    if (!_in_copter_mode && _thrust_rpyt_out[2] == 0.0f) {
+        motor_out[2] = get_pwm_output_min();
     }
     for (i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
         if (motor_enabled[i]) {
@@ -207,7 +207,7 @@ void AP_MotorsMatrix::output_armed_stabilizing()
     for (i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
         // Tao Du.
         // skip the front rotor if we are in the quad plane mode.
-        if (_last_frame_class == MOTOR_FRAME_QUADPLANE_CFG && i == 0) continue;
+        if (_last_frame_class == MOTOR_FRAME_QUADPLANE_CFG && i == 2) continue;
         if (motor_enabled[i]) {
             _thrust_rpyt_out[i] = roll_thrust * _roll_factor[i] + pitch_thrust * _pitch_factor[i];
             if (!is_zero(_yaw_factor[i])){
@@ -240,7 +240,7 @@ void AP_MotorsMatrix::output_armed_stabilizing()
     for (i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
         // Tao Du.
         // skip the front rotor if we are in the quad plane mode.
-        if (_last_frame_class == MOTOR_FRAME_QUADPLANE_CFG && i == 0) continue;
+        if (_last_frame_class == MOTOR_FRAME_QUADPLANE_CFG && i == 2) continue;
         if (motor_enabled[i]) {
             _thrust_rpyt_out[i] = _thrust_rpyt_out[i] + yaw_thrust * _yaw_factor[i];
 
@@ -301,13 +301,13 @@ void AP_MotorsMatrix::output_armed_stabilizing()
         float current_throttle = constrain_float(_throttle_control_in,0.0f,1000.0f) / 1000.0f;
         float last_throttle = constrain_float(_last_throttle_in_copter_mode, 0.0f, 1000.0f) / 1000.0f;
         if (_copter_to_glider_transition) {
-            _thrust_rpyt_out[0] = (current_throttle - last_throttle)
+            _thrust_rpyt_out[2] = (current_throttle - last_throttle)
                 / (1.0f - last_throttle);
             if (current_throttle > 0.75f) {
                 _copter_to_glider_transition = false;
             }
         } else {
-            _thrust_rpyt_out[0] = current_throttle;
+            _thrust_rpyt_out[2] = current_throttle;
         }
     }
 
@@ -397,12 +397,12 @@ void AP_MotorsMatrix::set_in_copter_mode(const bool in_copter_mode) {
     if (_in_copter_mode == in_copter_mode) return;
     _in_copter_mode = in_copter_mode;
     if (_in_copter_mode) {
-        // Remove motor 1.
-        remove_motor(0);
+        // Remove motor 3.
+        remove_motor(2);
         _glider_to_copter_transition = true;
     } else {
-        // Add motor 1.
-        add_motor_raw(AP_MOTORS_MOT_1, 0.0, 0.0, 0.0, 1);
+        // Add motor 3.
+        add_motor_raw(AP_MOTORS_MOT_3, 0.0, 0.0, 0.0, 3);
         _copter_to_glider_transition = true;
     }
 }
@@ -418,11 +418,11 @@ void AP_MotorsMatrix::setup_motors(motor_frame_class frame_class, motor_frame_ty
 
     switch (frame_class) {
         case MOTOR_FRAME_QUADPLANE_CFG: {
-            add_motor_raw(AP_MOTORS_MOT_1, 0.0, 0.0, 0.0, 1);
-            add_motor(AP_MOTORS_MOT_2, 45, AP_MOTORS_MATRIX_YAW_FACTOR_CCW,  2);
-            add_motor(AP_MOTORS_MOT_3,-135, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 3);
-            add_motor(AP_MOTORS_MOT_4, -45, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  4);
-            add_motor(AP_MOTORS_MOT_5, 135, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  5);
+            add_motor_raw(AP_MOTORS_MOT_3, 0.0, 0.0, 0.0, 3);
+            add_motor(AP_MOTORS_MOT_5, 54, AP_MOTORS_MATRIX_YAW_FACTOR_CCW,  5);
+            add_motor(AP_MOTORS_MOT_6,-132, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 6);
+            add_motor(AP_MOTORS_MOT_7, -54, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  7);
+            add_motor(AP_MOTORS_MOT_8, 132, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  8);
             success = true;
             break;
         }
