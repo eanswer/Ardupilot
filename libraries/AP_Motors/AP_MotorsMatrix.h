@@ -16,7 +16,9 @@ public:
 
     /// Constructor
     AP_MotorsMatrix(uint16_t loop_rate, uint16_t speed_hz = AP_MOTORS_SPEED_DEFAULT) :
-        AP_MotorsMulticopter(loop_rate, speed_hz)
+        AP_MotorsMulticopter(loop_rate, speed_hz), _in_copter_mode(false),
+        _copter_to_glider_transition(false),
+        _glider_to_copter_transition(false)
     {};
 
     // init
@@ -43,6 +45,9 @@ public:
     // get_motor_mask - returns a bitmask of which outputs are being used for motors (1 means being used)
     //  this can be used to ensure other pwm outputs (i.e. for servos) do not conflict
     uint16_t            get_motor_mask();
+
+    // Switch between copter and glider.
+    void                set_in_copter_mode(const bool in_copter_mode) override;
 
 protected:
     // output - sends commands to the motors
@@ -76,4 +81,10 @@ protected:
     uint8_t             _test_order[AP_MOTORS_MAX_NUM_MOTORS];  // order of the motors in the test sequence
     motor_frame_class   _last_frame_class; // most recently requested frame class (i.e. quad, hexa, octa, etc)
     motor_frame_type    _last_frame_type; // most recently requested frame type (i.e. plus, x, v, etc)
+
+private:
+    // Switch between copter and glider mode.
+    bool _in_copter_mode;
+    bool _copter_to_glider_transition;
+    bool _glider_to_copter_transition;
 };

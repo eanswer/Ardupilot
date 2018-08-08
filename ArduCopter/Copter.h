@@ -346,6 +346,10 @@ private:
     MOTOR_CLASS *motors;
     const struct AP_Param::GroupInfo *motors_var_info;
 
+    // Tao Du
+    bool in_copter_mode;
+    int16_t last_throttle_in_copter_mode;
+
     // GPS variables
     // Sometimes we need to remove the scaling for distance calcs
     float scaleLongDown;

@@ -102,7 +102,19 @@ public:
     // var_info for holding Parameter information
     static const struct AP_Param::GroupInfo        var_info[];
 
+    virtual void set_in_copter_mode(const bool in_copter_mode) {}
+
+    void get_throttle_control_in(const int16_t throttle_control_in) {
+        _throttle_control_in = throttle_control_in;
+    }
+
+    void get_last_throttle_in_copter_mode(const int16_t last_throttle_in_copter_mode) {
+        _last_throttle_in_copter_mode = last_throttle_in_copter_mode;
+    }
+
 protected:
+    int16_t             _throttle_control_in;
+    int16_t             _last_throttle_in_copter_mode;
 
     // run spool logic
     void                output_logic();

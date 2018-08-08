@@ -370,9 +370,23 @@ void Copter::send_sensor_info_to_motor() {
 }
 
 void Copter::send_radio_info_to_motor() {
+    // calculate position of flight mode switch
+    int8_t switch_position;
+    uint16_t rc6_in = RC_Channels::rc_channel(CH_6)->get_radio_in();
+    if      (rc6_in < 1231) switch_position = 0;
+    else if (rc6_in < 1750) switch_position = 1;
+    else switch_position = 2;
+
+    // We assume 0 -> quad, 1 -> quadplane, 2 -> ignore.
+    if (switch_position == 0) {
+        in_copter_mode = true;
+    } else if (switch_position == 1) {
+        in_copter_mode = false;
+    }
+    motors->set_in_copter_mode(in_copter_mode);
     // ::printf("%.3f %.3f %.3f %.3f\n", ((AP_MotorsQuadPlane*)motors)->get_radio_roll_in(), ((AP_MotorsQuadPlane*)motors)->get_radio_pitch_in(), ((AP_MotorsQuadPlane*)motors)->get_radio_throttle_in(), ((AP_MotorsQuadPlane*)motors)->get_radio_yaw_in());
-    motors->set_radio_rpyt(channel_roll->norm_input(), channel_pitch->norm_input(), channel_throttle->get_control_in_zero_dz()*0.001, channel_yaw->norm_input());
-    motors->set_radio_switch(RC_Channels::rc_channel(CH_5)->get_radio_in(), RC_Channels::rc_channel(CH_6)->get_radio_in());
+    //motors->set_radio_rpyt(channel_roll->norm_input(), channel_pitch->norm_input(), channel_throttle->get_control_in_zero_dz()*0.001, channel_yaw->norm_input());
+    //motors->set_radio_switch(RC_Channels::rc_channel(CH_5)->get_radio_in(), RC_Channels::rc_channel(CH_6)->get_radio_in());
 }
 // ----------------------------------------------------------------------
 

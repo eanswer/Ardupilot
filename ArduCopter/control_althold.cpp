@@ -45,8 +45,18 @@ void Copter::althold_run()
     // get pilot's desired yaw rate
     float target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->get_control_in());
 
+    // Tao Du
+    // keep track of the last throttle in the copter mode.
+    // throttle_control is in range (0, 1000).
+    int16_t throttle_control = channel_throttle->get_control_in();
+    if (in_copter_mode) {
+        last_throttle_in_copter_mode = throttle_control;
+    } else {
+        motors->get_throttle_control_in(throttle_control);
+    }
+    motors->get_last_throttle_in_copter_mode(last_throttle_in_copter_mode);
     // get pilot desired climb rate
-    float target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->get_control_in());
+    float target_climb_rate = get_pilot_desired_climb_rate(last_throttle_in_copter_mode);
     target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
 
 #if FRAME_CONFIG == HELI_FRAME
