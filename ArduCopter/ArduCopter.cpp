@@ -113,8 +113,8 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
     // July, 2018
     // Jie Xu
     // Schedule Airspeed task
-    SCHED_TASK(read_airspeed,          10,    100),
-    SCHED_TASK(airspeed_ratio_update,   1,    100),
+    // SCHED_TASK(read_airspeed,          10,    100),
+    // SCHED_TASK(airspeed_ratio_update,   1,    100),
     // -------------------------------------------------------------
     SCHED_TASK(fourhundred_hz_logging,400,    50),
     SCHED_TASK(update_notify,         50,     90),
@@ -274,7 +274,7 @@ void Copter::fast_loop()
     // ----------------------------------------------------------------------
     // July, 2018
     // Jie Xu
-    send_sensor_info_to_motor();
+    // send_sensor_info_to_motor();
     
     // ----------------------------------------------------------------------
 
@@ -385,7 +385,7 @@ void Copter::send_radio_info_to_motor() {
         in_copter_mode = true;
     } else if (switch_position == 1) {
         if (in_copter_mode) {
-            _throttle_activated = true;
+            _throttle_activated = false;
         }
         in_copter_mode = false;
     }
@@ -519,12 +519,14 @@ void Copter::ten_hz_logging_loop()
 // Aug, 2018
 // Jie Xu
 // write new logs
+/*
     motors->get_state(state);
     motors->get_state0(state0);
     motors->get_stage(log_stage);
     Log_Write_State();
     Log_Write_State0();
     Log_Write_Control();
+*/
 }
 
 // twentyfive_hz_logging - should be run at 25hz

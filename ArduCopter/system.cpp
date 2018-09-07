@@ -172,8 +172,8 @@ void Copter::init_ardupilot()
     // July, 2018
     // Jie Xu
     // init airspeed sensor
-    airspeed.init();
-    ahrs.set_airspeed(&airspeed);
+    // airspeed.init();
+    // ahrs.set_airspeed(&airspeed);
     // -----------------------------------------------------------------
 
     // update motor interlock state
@@ -362,13 +362,13 @@ void Copter::startup_INS_ground()
 
     // July, 2018
     // Jie Xu
-    if (airspeed.enabled()) {
-        // initialize airspeed sensor
-        // --------------------------
-        zero_airspeed(true);
-    } else {
-        gcs_send_text(MAV_SEVERITY_WARNING,"No airspeed");
-    }
+    // if (airspeed.enabled()) {
+    //     // initialize airspeed sensor
+    //     // --------------------------
+    //     zero_airspeed(true);
+    // } else {
+    //     gcs_send_text(MAV_SEVERITY_WARNING,"No airspeed");
+    // }
 }
 
 // calibrate gyros - returns true if successfully calibrated

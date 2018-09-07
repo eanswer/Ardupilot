@@ -14,7 +14,7 @@ static const struct Menu::command test_menu_commands[] = {
     {"ins",                 MENU_FUNC(test_ins)},
     // July, 2018
     // Jie Xu
-    {"airspeed",            MENU_FUNC(test_airspeed)},
+    // {"airspeed",            MENU_FUNC(test_airspeed)},
     {"optflow",             MENU_FUNC(test_optflow)},
     {"relay",               MENU_FUNC(test_relay)},
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
