@@ -43,21 +43,53 @@ void Copter::althold_run()
     get_pilot_desired_lean_angles(channel_roll->get_control_in(), channel_pitch->get_control_in(), target_roll, target_pitch, attitude_control->get_althold_lean_angle_max());
 
     // get pilot's desired yaw rate
-    float target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->get_control_in());
+    // Jie Xu
+    int16_t throttle_control = channel_throttle->get_control_in();
+    float target_yaw_rate;
+    float target_climb_rate;
+    if (!in_copter_mode) {
+        // mixing yaw rate from roll
+        target_yaw_rate = target_roll * 2.0f;
+        // TODO: fix target pitch as 10 degree;
 
+        // compute throttle for front motor
+        float throttle_control_norm = (float)throttle_control / 1000.0f;
+        if (throttle_control_norm > 0.75) {
+            _throttle_activated = true;
+        }
+        float throttle_in;
+        if (!_throttle_activated) {
+            if (throttle_control_norm < 0.5f) {
+                throttle_in = 0.0f;
+            } else {
+                throttle_in = (throttle_control_norm - 0.5f) * 2.0f;
+            }
+        } else {
+            throttle_in = throttle_control_norm;
+        }
+        motors->set_throttle_in(throttle_in);
+    } else {
+        // keep track of the last throttle in the copter mode
+        last_throttle_in_copter_mode = throttle_control;
+
+        // get pilot desired yaw rate in copter mode
+        target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->get_control_in());
+    }
+
+    // get pilot desired climb rate
+    target_climb_rate = get_pilot_desired_climb_rate(last_throttle_in_copter_mode);
+    target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
+    
     // Tao Du
     // keep track of the last throttle in the copter mode.
     // throttle_control is in range (0, 1000).
-    int16_t throttle_control = channel_throttle->get_control_in();
+    /*int16_t throttle_control = channel_throttle->get_control_in();
     if (in_copter_mode) {
         last_throttle_in_copter_mode = throttle_control;
     } else {
         motors->get_throttle_control_in(throttle_control);
     }
-    motors->get_last_throttle_in_copter_mode(last_throttle_in_copter_mode);
-    // get pilot desired climb rate
-    float target_climb_rate = get_pilot_desired_climb_rate(last_throttle_in_copter_mode);
-    target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
+    motors->get_last_throttle_in_copter_mode(last_throttle_in_copter_mode);*/
 
 #if FRAME_CONFIG == HELI_FRAME
     // helicopters are held on the ground until rotor speed runup has finished

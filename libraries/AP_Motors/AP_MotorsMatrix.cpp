@@ -297,18 +297,21 @@ void AP_MotorsMatrix::output_armed_stabilizing()
     // Tao Du
     // compute the front motor.
     if (!_in_copter_mode) {
-        // linear_throttle in 0 - 1 now.
-        float current_throttle = constrain_float(_throttle_control_in,0.0f,1000.0f) / 1000.0f;
-        float last_throttle = constrain_float(_last_throttle_in_copter_mode, 0.0f, 1000.0f) / 1000.0f;
-        if (_copter_to_glider_transition) {
-            _thrust_rpyt_out[2] = (current_throttle - last_throttle)
-                / (1.0f - last_throttle);
-            if (current_throttle > 0.75f) {
-                _copter_to_glider_transition = false;
-            }
-        } else {
-            _thrust_rpyt_out[2] = current_throttle;
-        }
+        // Jie Xu
+        _thrust_rpyt_out[2] = _throttle_in;
+        
+        // // linear_throttle in 0 - 1 now.
+        // float current_throttle = constrain_float(_throttle_control_in,0.0f,1000.0f) / 1000.0f;
+        // float last_throttle = constrain_float(_last_throttle_in_copter_mode, 0.0f, 1000.0f) / 1000.0f;
+        // if (_copter_to_glider_transition) {
+        //     _thrust_rpyt_out[2] = (current_throttle - last_throttle)
+        //         / (1.0f - last_throttle);
+        //     if (current_throttle > 0.75f) {
+        //         _copter_to_glider_transition = false;
+        //     }
+        // } else {
+        //     _thrust_rpyt_out[2] = current_throttle;
+        // }
     }
 
     // constrain all outputs to 0.0f to 1.0f

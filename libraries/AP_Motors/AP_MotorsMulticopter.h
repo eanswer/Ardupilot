@@ -112,9 +112,14 @@ public:
         _last_throttle_in_copter_mode = last_throttle_in_copter_mode;
     }
 
+    void set_throttle_in(const float throttle_in) {
+        _throttle_in = throttle_in;
+    }
+    
 protected:
     int16_t             _throttle_control_in;
     int16_t             _last_throttle_in_copter_mode;
+    float               _throttle_in;
 
     // run spool logic
     void                output_logic();

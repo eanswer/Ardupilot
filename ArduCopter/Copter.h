@@ -349,7 +349,8 @@ private:
     // Tao Du
     bool in_copter_mode;
     int16_t last_throttle_in_copter_mode;
-
+    bool _throttle_activated;
+    
     // GPS variables
     // Sometimes we need to remove the scaling for distance calcs
     float scaleLongDown;

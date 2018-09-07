@@ -365,7 +365,7 @@ void Copter::send_sensor_info_to_motor() {
     const Vector3f& velocity_neu = inertial_nav.get_velocity() / 100.0f;
     motors->set_ned_velocity(Vector3f(velocity_neu.x, velocity_neu.y, -velocity_neu.z));
     motors->set_battery_voltage(battery.voltage());
-    motors->set_airspeed(airspeed.get_airspeed());
+    // motors->set_airspeed(airspeed.get_airspeed());
     // ::printf("airspeed = %.3f\n", ((AP_MotorsQuadPlane*)motors)->get_airspeed());
 }
 
@@ -379,13 +379,18 @@ void Copter::send_radio_info_to_motor() {
 
     // We assume 0 -> quad, 1 -> quadplane, 2 -> ignore.
     if (switch_position == 0) {
+        if (!in_copter_mode) {
+            _throttle_activated = false;
+        }
         in_copter_mode = true;
     } else if (switch_position == 1) {
+        if (in_copter_mode) {
+            _throttle_activated = true;
+        }
         in_copter_mode = false;
     }
     motors->set_in_copter_mode(in_copter_mode);
     // ::printf("%.3f %.3f %.3f %.3f\n", ((AP_MotorsQuadPlane*)motors)->get_radio_roll_in(), ((AP_MotorsQuadPlane*)motors)->get_radio_pitch_in(), ((AP_MotorsQuadPlane*)motors)->get_radio_throttle_in(), ((AP_MotorsQuadPlane*)motors)->get_radio_yaw_in());
-    //motors->set_radio_rpyt(channel_roll->norm_input(), channel_pitch->norm_input(), channel_throttle->get_control_in_zero_dz()*0.001, channel_yaw->norm_input());
     //motors->set_radio_switch(RC_Channels::rc_channel(CH_5)->get_radio_in(), RC_Channels::rc_channel(CH_6)->get_radio_in());
 }
 // ----------------------------------------------------------------------
