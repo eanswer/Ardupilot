@@ -545,6 +545,8 @@ void Copter::set_default_frame_class()
         g2.frame_class.set(12);
         // set default control mode to AltHode
         control_mode = ALT_HOLD;
+        // set angle_max
+        // aparm.angle_max = 3000;
     }
 }
 
