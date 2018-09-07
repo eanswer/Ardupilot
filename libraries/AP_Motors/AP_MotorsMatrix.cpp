@@ -288,7 +288,7 @@ void AP_MotorsMatrix::output_armed_stabilizing()
     for (i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
         // Tao Du.
         // skip the front rotor if we are in the quad plane mode.
-        if (_last_frame_class == MOTOR_FRAME_QUADPLANE_CFG && i == 0) continue;
+        if (_last_frame_class == MOTOR_FRAME_QUADPLANE_CFG && i == 2) continue;
         if (motor_enabled[i]) {
             _thrust_rpyt_out[i] = throttle_thrust_best_rpy + thr_adj + rpy_scale*_thrust_rpyt_out[i];
         }
