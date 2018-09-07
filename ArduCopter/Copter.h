@@ -493,6 +493,8 @@ private:
     float state[12];
     float state0[12];
     uint8_t log_stage;
+    float log_target_roll, log_target_pitch, log_target_yaw_rate, log_target_climb_rate;
+    float log_target_throttle;
     // -------------------------------------------------------
 
     // -----------------------------------------------------------------------------

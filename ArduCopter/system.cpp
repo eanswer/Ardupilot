@@ -543,6 +543,8 @@ void Copter::set_default_frame_class()
         // Jie Xu
         // set default frame class to QUADPLANE_CFG
         g2.frame_class.set(12);
+        // set default control mode to AltHode
+        control_mode = ALT_HOLD;
     }
 }
 

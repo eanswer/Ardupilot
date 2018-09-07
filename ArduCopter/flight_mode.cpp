@@ -170,7 +170,7 @@ failed:
 // update_flight_mode - calls the appropriate attitude controllers based on flight mode
 // called at 100hz or more
 void Copter::update_flight_mode()
-{
+{   
     // Update EKF speed limit - used to limit speed when we are using optical flow
     ahrs.getEkfControlLimits(ekfGndSpdLimit, ekfNavVelGainScaler);
 

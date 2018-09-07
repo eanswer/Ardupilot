@@ -390,7 +390,9 @@ void Copter::send_radio_info_to_motor() {
         in_copter_mode = false;
     }
     motors->set_in_copter_mode(in_copter_mode);
-    // ::printf("%.3f %.3f %.3f %.3f\n", ((AP_MotorsQuadPlane*)motors)->get_radio_roll_in(), ((AP_MotorsQuadPlane*)motors)->get_radio_pitch_in(), ((AP_MotorsQuadPlane*)motors)->get_radio_throttle_in(), ((AP_MotorsQuadPlane*)motors)->get_radio_yaw_in());
+
+    //::printf("target roll = %.3f, target_pitch = %.3f, target_yaw_rate = %.3f, target_climb_rate = %.3f, target_throttle = %.3f\n", log_target_roll, log_target_pitch, log_target_yaw_rate, log_target_climb_rate, log_target_throttle);
+    //::printf("%.3f %.3f %.3f %.3f\n", ((AP_MotorsQuadPlane*)motors)->get_radio_roll_in(), ((AP_MotorsQuadPlane*)motors)->get_radio_pitch_in(), ((AP_MotorsQuadPlane*)motors)->get_radio_throttle_in(), ((AP_MotorsQuadPlane*)motors)->get_radio_yaw_in());
     //motors->set_radio_switch(RC_Channels::rc_channel(CH_5)->get_radio_in(), RC_Channels::rc_channel(CH_6)->get_radio_in());
 }
 // ----------------------------------------------------------------------

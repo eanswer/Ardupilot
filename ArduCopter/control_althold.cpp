@@ -46,6 +46,7 @@ void Copter::althold_run()
     // Jie Xu
     int16_t throttle_control = channel_throttle->get_control_in();
     float target_yaw_rate;
+    float throttle_in = 0;
     if (!in_copter_mode) {
         // mixing yaw rate from roll
         target_yaw_rate = target_roll * 2.0f;
@@ -56,7 +57,6 @@ void Copter::althold_run()
         if (throttle_control_norm > 0.75f) {
             _throttle_activated = true;
         }
-        float throttle_in;
         if (!_throttle_activated) {
             if (throttle_control_norm < 0.5f) {
                 throttle_in = 0.0f;
@@ -82,6 +82,9 @@ void Copter::althold_run()
     target_climb_rate = get_pilot_desired_climb_rate(last_throttle_in_copter_mode);
 
     target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
+    
+    //log_target_roll = target_roll; log_target_pitch = target_pitch; log_target_climb_rate = target_climb_rate;
+    //log_target_yaw_rate = target_yaw_rate; log_target_throttle = throttle_in;
     
     // Tao Du
     // keep track of the last throttle in the copter mode.
