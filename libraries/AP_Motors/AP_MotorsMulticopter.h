@@ -104,22 +104,14 @@ public:
 
     virtual void set_in_copter_mode(const bool in_copter_mode) {}
 
-    void get_throttle_control_in(const int16_t throttle_control_in) {
-        _throttle_control_in = throttle_control_in;
-    }
-
-    void get_last_throttle_in_copter_mode(const int16_t last_throttle_in_copter_mode) {
-        _last_throttle_in_copter_mode = last_throttle_in_copter_mode;
-    }
-
-    void set_throttle_in(const float throttle_in) {
-        _throttle_in = throttle_in;
+    // Jie Xu
+    void set_front_throttle_in(const float front_throttle_in) {
+        _front_throttle_in = front_throttle_in;
     }
     
 protected:
     int16_t             _throttle_control_in;
-    int16_t             _last_throttle_in_copter_mode;
-    float               _throttle_in;
+    float               _front_throttle_in;
 
     // run spool logic
     void                output_logic();

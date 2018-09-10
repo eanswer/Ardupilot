@@ -169,6 +169,17 @@ public:
     virtual void        get_state(float _state[]) {}
     virtual void        get_state0(float _state0[]) {}
     virtual void        get_stage(uint8_t &_stage) {}
+    float               get_throttle_term() { return _throttle_term; }
+    int16_t             get_rcout_5() { return _rcout[0]; }
+    int16_t             get_rcout_6() { return _rcout[1]; }
+    int16_t             get_rcout_7() { return _rcout[2]; }
+    int16_t             get_rcout_8() { return _rcout[3]; }
+    float               get_thrust_rpyt_out_5() { return _thrust_rpyt_out_log[0]; }
+    float               get_thrust_rpyt_out_6() { return _thrust_rpyt_out_log[1]; }
+    float               get_thrust_rpyt_out_7() { return _thrust_rpyt_out_log[2]; }
+    float               get_thrust_rpyt_out_8() { return _thrust_rpyt_out_log[3]; }
+    float               get_throttle_thrust_best_rpy() { return _throttle_thrust_best_rpy; }
+    float               get_thr_adj() { return _thr_adj; }
     // -------------------------------------------------------------------------------------------
 
     // set loop rate. Used to support loop rate as a parameter
@@ -237,4 +248,11 @@ protected:
     float _yaw_radio_passthrough = 0.0f;      // yaw input from pilot in -1 ~ +1 range.  used for setup and providing servo feedback while landed
     
     AP_Int8             _pwm_type;            // PWM output type
+
+    // Jie Xu
+    float _throttle_term;
+    int16_t _rcout[4];
+    float _throttle_thrust_best_rpy;
+    float _thr_adj;
+    float _thrust_rpyt_out_log[4];
 };

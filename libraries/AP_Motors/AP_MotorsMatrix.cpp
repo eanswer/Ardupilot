@@ -131,6 +131,11 @@ void AP_MotorsMatrix::output_to_motors()
         motor_out[2] = get_pwm_output_min();
     }
     
+    _rcout[0] = motor_out[4];
+    _rcout[1] = motor_out[5];
+    _rcout[2] = motor_out[6];
+    _rcout[3] = motor_out[7];
+
     for (i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
         if (motor_enabled[i]) {
             rc_write(i, motor_out[i]);
@@ -296,24 +301,16 @@ void AP_MotorsMatrix::output_armed_stabilizing()
         }
     }
 
+    // Jie Xu
+    _throttle_term = throttle_thrust_best_rpy + thr_adj;
+    _throttle_thrust_best_rpy = throttle_thrust_best_rpy;
+    _thr_adj = thr_adj;
+
     // Tao Du
     // compute the front motor.
     if (!_in_copter_mode) {
         // Jie Xu
-        _thrust_rpyt_out[2] = _throttle_in;
-        
-        // // linear_throttle in 0 - 1 now.
-        // float current_throttle = constrain_float(_throttle_control_in,0.0f,1000.0f) / 1000.0f;
-        // float last_throttle = constrain_float(_last_throttle_in_copter_mode, 0.0f, 1000.0f) / 1000.0f;
-        // if (_copter_to_glider_transition) {
-        //     _thrust_rpyt_out[2] = (current_throttle - last_throttle)
-        //         / (1.0f - last_throttle);
-        //     if (current_throttle > 0.75f) {
-        //         _copter_to_glider_transition = false;
-        //     }
-        // } else {
-        //     _thrust_rpyt_out[2] = current_throttle;
-        // }
+        _thrust_rpyt_out[2] = _front_throttle_in;
     }
 
     // constrain all outputs to 0.0f to 1.0f
@@ -323,6 +320,11 @@ void AP_MotorsMatrix::output_armed_stabilizing()
             _thrust_rpyt_out[i] = constrain_float(_thrust_rpyt_out[i], 0.0f, 1.0f);
         }
     }
+    // Jie Xu
+    _thrust_rpyt_out_log[0] = _thrust_rpyt_out[4];
+    _thrust_rpyt_out_log[1] = _thrust_rpyt_out[5];
+    _thrust_rpyt_out_log[2] = _thrust_rpyt_out[6];
+    _thrust_rpyt_out_log[3] = _thrust_rpyt_out[7];
 }
 
 // output_test - spin a motor at the pwm value specified

@@ -390,6 +390,9 @@ void Copter::send_radio_info_to_motor() {
         in_copter_mode = false;
     }
     motors->set_in_copter_mode(in_copter_mode);
+
+    // ::printf("in_copter_mode = %d\n", in_copter_mode);
+    // ::printf("in_copter_mode = %d, target_climb_rate = %.3f\n", in_copter_mode, log_target_climb_rate);
 }
 // ----------------------------------------------------------------------
 
@@ -483,6 +486,9 @@ void Copter::fourhundred_hz_logging()
 // should be run at 10hz
 void Copter::ten_hz_logging_loop()
 {
+    ::printf("get_throttle() = %.3f, throttle_term = %.3f, throttle_best = %.3f, thr_adj = %.3f\n", motors->get_throttle(), motors->get_throttle_term(), motors->get_throttle_thrust_best_rpy(), motors->get_thr_adj());
+    ::printf("rcout_5 = %d, rcout_6 = %d, rcout_7 = %d, rcout_8 = %d\n", motors->get_rcout_5(), motors->get_rcout_6(), motors->get_rcout_7(), motors->get_rcout_8());
+    ::printf("rpyt_out_5 = %.3f, rpyt_out_6 = %.3f, rpyt_out_7 = %.3f, rpyt_out_8 = %.3f\n", motors->get_thrust_rpyt_out_5(), motors->get_thrust_rpyt_out_6(), motors->get_thrust_rpyt_out_7(), motors->get_thrust_rpyt_out_8());
     // log attitude data if we're not already logging at the higher rate
     if (should_log(MASK_LOG_ATTITUDE_MED) && !should_log(MASK_LOG_ATTITUDE_FAST)) {
         Log_Write_Attitude();

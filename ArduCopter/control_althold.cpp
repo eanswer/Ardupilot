@@ -66,7 +66,7 @@ void Copter::althold_run()
         } else {
             throttle_in = throttle_control_norm;
         }
-        motors->set_throttle_in(throttle_in);
+        motors->set_front_throttle_in(throttle_in);
     } else {
         // keep track of the last throttle in the copter mode
         last_throttle_in_copter_mode = throttle_control;
@@ -74,7 +74,7 @@ void Copter::althold_run()
         // get pilot desired yaw rate in copter mode
         target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->get_control_in());
     }
-
+    
     float target_climb_rate;
     // get pilot desired climb rate
     // Jie Xu
@@ -83,8 +83,8 @@ void Copter::althold_run()
 
     target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
     
-    //log_target_roll = target_roll; log_target_pitch = target_pitch; log_target_climb_rate = target_climb_rate;
-    //log_target_yaw_rate = target_yaw_rate; log_target_throttle = throttle_in;
+    log_target_roll = target_roll; log_target_pitch = target_pitch; log_target_climb_rate = -1.0;
+    log_target_yaw_rate = target_yaw_rate; log_target_throttle = throttle_in;
     
     // Tao Du
     // keep track of the last throttle in the copter mode.
@@ -215,6 +215,9 @@ void Copter::althold_run()
         // call position controller
         pos_control->set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
         pos_control->update_z_controller();
+        // Jie Xu;
+        log_target_climb_rate = target_climb_rate;
+
         break;
     }
 }
