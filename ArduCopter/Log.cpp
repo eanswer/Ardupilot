@@ -251,6 +251,81 @@ void Copter::Log_Write_Optflow()
  #endif     // OPTFLOW == ENABLED
 }
 
+// -----------------------------------------------------
+// Jie Xu
+// PID log input
+struct PACKED log_PID_Log_Input {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float    desired_pos_x;
+    float    desired_pos_y;
+    float    pos_x;
+    float    pos_y;
+    float    desired_vel_x;
+    float    desired_vel_y;
+    float    vel_x;
+    float    vel_y;
+    float    desired_accel_x;
+    float    desired_accel_y;
+};
+
+void Copter::Log_Write_PID_Log_Input()
+{
+    struct log_pidinput pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_PIDIN_MSG),
+        time_us         : AP_HAL::micros64(),
+        desired_pos_x   : pos_target.x,
+        desired_pos_y   : pos_target.y,
+        pos_x           : position.x,
+        pos_y           : position.y,
+        desired_vel_x   : vel_target.x,
+        desired_vel_y   : vel_target.y,
+        vel_x           : velocity.x,
+        vel_y           : velocity.y,
+        desired_accel_x : accel_target.x,
+        desired_accel_y : accel_target.y
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+// -----------------------------------------------------
+// -----------------------------------------------------
+// Jie Xu
+// PID log output
+struct PACKED log_PID_Log_Output {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float    desired_pos_x;
+    float    desired_pos_y;
+    float    pos_x;
+    float    pos_y;
+    float    desired_vel_x;
+    float    desired_vel_y;
+    float    vel_x;
+    float    vel_y;
+    float    desired_accel_x;
+    float    desired_accel_y;
+};
+
+void Copter::Log_Write_PID_Log_Output()
+{
+    struct log_pidoutput pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_PIDOUT_MSG),
+        time_us         : AP_HAL::micros64(),
+        desired_pos_x   : pos_target.x,
+        desired_pos_y   : pos_target.y,
+        pos_x           : position.x,
+        pos_y           : position.y,
+        desired_vel_x   : vel_target.x,
+        desired_vel_y   : vel_target.y,
+        vel_x           : velocity.x,
+        vel_y           : velocity.y,
+        desired_accel_x : accel_target.x,
+        desired_accel_y : accel_target.y
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+// -----------------------------------------------------
+
 struct PACKED log_Nav_Tuning {
     LOG_PACKET_HEADER;
     uint64_t time_us;
@@ -880,6 +955,11 @@ const struct LogStructure Copter::log_structure[] = {
       "THRO",  "QBffffbbbb",  "TimeUS,Stage,Vel,VelZ,Acc,AccEfZ,Throw,AttOk,HgtOk,PosOk" },
     { LOG_PROXIMITY_MSG, sizeof(log_Proximity),
       "PRX",   "QBfffffffffff","TimeUS,Health,D0,D45,D90,D135,D180,D225,D270,D315,DUp,CAn,CDis" },
+    // PID log
+    { LOG_PIDIN_MSG, sizeof(log_pidinput),
+      "GUID",  "QBffffff",    "TimeUS,Type,pX,pY,pZ,vX,vY,vZ" },
+    { LOG_PIDOUT_MSG, sizeof(log_pidoutput),
+      "GUID",  "QBffffff",    "TimeUS,Type,pX,pY,pZ,vX,vY,vZ" },
 };
 
 #if CLI_ENABLED == ENABLED
