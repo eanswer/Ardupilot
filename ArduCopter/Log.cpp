@@ -386,9 +386,9 @@ struct PACKED log_Control_Tuning {
     uint64_t time_us;
     float    throttle_in;   // desired_z
     float    angle_boost; // desired_thrust[0]
-    float    throttle_out; // desired_roll // desired_thrust[1]
-    float    throttle_hover; // desired_pitch // desired_thrust[2]
-    float    desired_alt; // desired_yaw // desired_thrust[3]
+    float    throttle_out; // desired_roll
+    float    throttle_hover; // desired_pitch
+    float    desired_alt; // desired_yaw_rate
     float    inav_alt;    // desired_thrust_sum
     int32_t  baro_alt;    // spool_mode
     int16_t  desired_rangefinder_alt;   
@@ -412,11 +412,11 @@ void Copter::Log_Write_Control_Tuning()
     struct log_Control_Tuning pkt = {
         LOG_PACKET_HEADER_INIT(LOG_CONTROL_TUNING_MSG),
         time_us             : AP_HAL::micros64(),
-        throttle_in         : desired_z,
+        throttle_in         : desired_vz,
         angle_boost         : desired_thrust[0],
-        throttle_out        : desired_roll,//desired_thrust[1],
-        throttle_hover      : desired_pitch, //desired_thrust[2],
-        desired_alt         : desired_yaw, // desired_thrust[3],
+        throttle_out        : desired_roll,
+        throttle_hover      : desired_pitch,
+        desired_alt         : desired_yaw_rate,
         inav_alt            : desired_thrust[0] + desired_thrust[1] + desired_thrust[2] + desired_thrust[3],
         baro_alt            : spool_mode,
         desired_rangefinder_alt : thr_ctrl_in,

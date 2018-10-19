@@ -230,7 +230,7 @@ public:
     }
     // Controller Infomation
     float real_x, real_y, real_z, real_roll, real_pitch, real_yaw, real_vx, real_vy, real_vz, real_rollspeed, real_pitchspeed, real_yawspeed;
-    float desired_z, desired_roll, desired_pitch, desired_yaw;
+    float desired_vz, desired_roll, desired_pitch, desired_yaw_rate;
     float pwm_out[4], desired_thrust[4];
     float real_battery;
     int   spool_mode;

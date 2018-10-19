@@ -45,24 +45,25 @@
 
 #if COPTER_NAME == HYBRID_COPTER
  #define MAX_ROTOR_IN_COPTER 4
-// Q = [1 1 1 2 2 20 2 2 2 2 2 10]. R = [5 5 5 5]. Mass = 1.329kg.
+// Q = [1 1 1 5 5 2 2 2 5 2 2 10]. R = [5 5 5 5]. Mass = 1.034kg.
 const float K[MAX_ROTOR_IN_COPTER][NUM_COL] = {
-{0.001041f,  -0.315886f,  -0.224488f,  -2.802311f,  0.022097f,  0.998197f,  0.000797f,  -0.616619f,  -0.500557f,  -0.654270f,  0.026987f,  1.341832f,  },
-{0.000870f,  0.316566f,  -0.222717f,  2.807850f,  0.022742f,  1.001821f,  0.000509f,  0.617928f,  -0.496599f,  0.655157f,  0.027009f,  1.346634f,  },
-{-0.315277f,  0.000831f,  -0.224951f,  0.006997f,  2.520314f,  -0.999964f,  -0.601237f,  0.001602f,  -0.501586f,  0.001562f,  0.515544f,  -1.336809f,  },
-{0.317172f,  0.000995f,  -0.222260f,  0.009306f,  -2.595657f,  -1.000014f,  0.607192f,  0.001967f,  -0.495578f,  0.002279f,  -0.575778f,  -1.351674f,  },
+{-0.223624f,-0.223598f,-0.223599f,-2.024983f,2.025209f,0.316228f,-0.438681f,-0.438630f,-0.604446f,-0.462194f,0.462238f,0.930210f,},
+{0.223590f,0.223616f,-0.223615f,2.025144f,-2.024918f,0.316228f,0.438615f,0.438666f,-0.604489f,0.462227f,-0.462183f,0.930210f,},
+{-0.223624f,0.223616f,-0.223581f,2.025146f,2.025218f,-0.316228f,-0.438681f,0.438666f,-0.604397f,0.462228f,0.462246f,-0.930210f,},
+{0.223590f,-0.223598f,-0.223633f,-2.024985f,-2.024913f,-0.316228f,0.438614f,-0.438630f,-0.604539f,-0.462194f,-0.462177f,-0.930210f,},
 };
 const float u0[MAX_ROTOR_IN_COPTER] = {
-    3.269005f,
-    3.243095f,
-    3.275689f,
-    3.236411f,
+    2.5284f,
+    2.5284f,
+    2.5284f,
+    2.5284f,
 };
 
-const float xybound = 3.0f;
-const float lower_z = 7.0f;
-const float upper_z = -3.0f;
+const float roll_pitch_degree_max = 20.0;
+const float yaw_rate_degree_max = 45.0;
+const float altitude_rate_max = 2.0;
 const float max_pwm = 2000.0f;
+
 #endif
 
 // For voltage estimation.
@@ -103,7 +104,7 @@ float deg2rad(const float x) {
     return x / 180.0 * PI;
 }
 
-void constrain_angle(float &x) {
+void wrap2PI(float &x) {
     for (;x >= PI;) 
         x -= 2.0 * PI;
     for (;x < -PI;)
@@ -224,6 +225,42 @@ float thrust2pwm_black_bi(const float thrust, const float voltage) {
     return clamp(throttle, 1000.0f, max_pwm);
 }
 
+float thrust2pwm_dji_set(const float thrust, const float voltage) {
+    // Output from matlab:
+    /*
+     Linear model Poly21:
+     a(x,y) = p00 + p10*x + p01*y + p20*x^2 + p11*x*y
+       where x is normalized by mean 1525 and std 231.1462
+       and where y is normalized by mean 11.7894 and std 0.3300
+     Coefficients (with 95% confidence bounds):
+       p00 =       2.939  (2.912, 2.966)
+       p10 =       2.422  (2.401, 2.442)
+       p01 =      0.1464  (0.1259, 0.1669)
+       p20 =      0.3989  (0.3762, 0.4215)
+       p11 =      0.1119  (0.0913, 0.1325)
+    */
+    // Reject unreasonable data.
+    if (thrust <= 0.0f || voltage <= 7.5f || voltage >= 13.0f) return 1000.0f;
+    const float mean_throttle = 1525.0f;
+    const float std_throttle = 231.1462f;
+    const float mean_voltage = 11.7894f;
+    const float std_voltage = 0.3300f;
+    const float p00 = 2.939f;
+    const float p10 = 2.422f;
+    const float p01 = 0.1464f;
+    const float p20 = 0.3989f;
+    const float p11 = 0.1119f;
+    const float y = (voltage - mean_voltage) / std_voltage;
+    const float a = p20;
+    const float b = p11 * y + p10;
+    const float c = p01 * y + p00 - thrust;
+    const float delta = b * b - 4 * a * c;
+    if (delta < 0.0f) return 1000.0f;
+    const float x = (-b + sqrtf(delta)) / 2.0f / a;
+    const float throttle = x * std_throttle + mean_throttle;
+    return clamp(throttle, 1000.0f, max_pwm);
+}
+
 void AP_MotorsHybrid::setup_motors(motor_frame_class frame_class, motor_frame_type frame_type) {
     // call parent
     AP_MotorsMatrix::setup_motors(frame_class, frame_type);
@@ -266,6 +303,9 @@ void AP_MotorsHybrid::output_to_motors() {
             initialization_finished = false;
             initial_yaw_sum = 0.0;
             yaw_count = 0;
+            for (i = 0;i < 12;++i) {
+                int_diff[i] = 0;
+            }
             break;
         }
         case SPIN_WHEN_ARMED:
@@ -278,19 +318,21 @@ void AP_MotorsHybrid::output_to_motors() {
         case THROTTLE_UNLIMITED:
         case SPOOL_DOWN:
             // set motor output based on thrust requests
-            if (!initialization_finished) {
+            /*if (!initialization_finished) {
                 for (i = 0;i < MAX_ROTOR_IN_COPTER;i++)
                     motor_out[i] = 1100;
             } else {
                 for (i=0; i<MAX_ROTOR_IN_COPTER; i++) {
-                    float pwm = thrust2pwm_black_bi(_thrust_rpyt_out[i], average_voltage);
+                    float pwm = thrust2pwm_dji_set(_thrust_rpyt_out[i], average_voltage);
                     pwm = clamp(pwm, (float)1100.0f, (float)1900.0f);
                     motor_out[i] = (int16_t)pwm;
-                    //double angle = (current_frame % 360 + i * 60) / 180.0 * 3.14159265;
-                    //motor_out[i] = 400.0 * sin(angle) + 1500.0f;
-                    // motor_out[i] = 1500;
                 }
-            }
+            }*/
+            for (i=0; i<MAX_ROTOR_IN_COPTER; i++) {
+                    float pwm = thrust2pwm_dji_set(_thrust_rpyt_out[i], average_voltage);
+                    pwm = clamp(pwm, (float)1100.0f, (float)1900.0f);
+                    motor_out[i] = (int16_t)pwm;
+                }
             break;
     }
 
@@ -304,7 +346,7 @@ void AP_MotorsHybrid::output_to_motors() {
 }
 
 void AP_MotorsHybrid::output_armed_stabilizing() {
-    {
+    /*{
         if (!initialization_finished) {
             float now_yaw = _copter.get_yaw();
             if (yaw_count == 0) {
@@ -332,7 +374,7 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
                 initialization_finished = true;
             }
         }
-    }
+    }*/
     {
         float   throttle_thrust;            // throttle thrust input value, 0.0 - 1.0
 
@@ -351,10 +393,12 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
     // Get current states:
     const float x = 0;
     const float y = 0;
-    const float z = -_copter.get_altitude(); // get altitude
+    // const float z = -_copter.get_altitude(); // get altitude
+    const float z = 0;
     const float roll = _copter.get_roll();
     const float pitch = _copter.get_pitch();
-    const float yaw = _copter.get_yaw();
+    // const float yaw = _copter.get_yaw();
+    const float yaw = 0;
     // get velocities
     const Vector3f velocity_ef = _copter.get_ned_velocity();
     const Vector3f velocity_bf = _copter.frame_conversion_ef_to_bf(velocity_ef);
@@ -369,35 +413,50 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
     // Get desired states.
     const float x0 = 0;
     const float y0 = 0;
+    const float z0 = 0;
     const float thr_ctrl = (float)_copter.get_channel_throttle_control_in();
     const float roll_ctrl = (float)_copter.get_channel_roll_control_in();
     const float pitch_ctrl = (float)_copter.get_channel_pitch_control_in();
     const float yaw_ctrl = (float)_copter.get_channel_yaw_control_in();
 
-    float z0 = 0.0f;
-    if (thr_ctrl < 500.0f) {
-        z0 = remap(thr_ctrl, 0.0f, 500.0f, lower_z, 0.0f);
+    float vz0 = 0.0f;
+    if (thr_ctrl < 400.0f) {
+        vz0 = remap(thr_ctrl, 0.0f, 400.0f, -altitude_rate_max, 0.0f);
+    } else if (thr_ctrl > 600.0f) {
+        vz0 = remap(thr_ctrl, 600.0f, 1000.0f, 0.0f, altitude_rate_max);
     } else {
-        z0 = remap(thr_ctrl, 500.0f, 1000.0f, 0.0f, upper_z);
+        vz0 = 0.0f;
     }
 
     // remap roll, pitch, yaw control input => degrees
-    float roll0 = remap(roll_ctrl, -4500.0f, 4500.0f, -30.0 / 180.0 * PI, 30.0 / 180.0 * PI);
-    float pitch0 = remap(pitch_ctrl, -4500.0f, 4500.0f, -30.0 / 180.0 * PI, 30.0 / 180.0 * PI);
+    float roll0, pitch0;
+    if (roll_ctrl < -500.0f) {
+        roll0 = remap(roll_ctrl, -4500.0f, -500.0f, -deg2rad(roll_pitch_degree_max), 0.0f);
+    } else if (roll_ctrl > 500.0f) {
+        roll0 = remap(roll_ctrl, 500.0f, 4500.0f, 0.0f, deg2rad(roll_pitch_degree_max));
+    } else {
+        roll0 = 0.0f;
+    }
+    if (pitch_ctrl < -500.0f) {
+        pitch0 = remap(pitch_ctrl, -4500.0f, -500.0f, -deg2rad(roll_pitch_degree_max), 0.0f);
+    } else if (pitch_ctrl > 500.0f) {
+        pitch0 = remap(pitch_ctrl, 500.0f, 4500.0f, 0.0f, deg2rad(roll_pitch_degree_max));
+    } else {
+        pitch0 = 0.0f;
+    }
     
     float yaw_change_deadzone = 500;
-    float desired_yaw_change;
+    float desired_yaw_rate;
     if (fabs(yaw_ctrl) < yaw_change_deadzone)
-        desired_yaw_change = 0.0;
+        desired_yaw_rate = 0.0;
     else if (yaw_ctrl > 0)
-        desired_yaw_change = remap(yaw_ctrl, yaw_change_deadzone, 4500.0, 0.0, deg2rad(90.0));
+        desired_yaw_rate = remap(yaw_ctrl, yaw_change_deadzone, 4500.0, 0.0, deg2rad(yaw_rate_degree_max));
     else
-        desired_yaw_change = remap(yaw_ctrl, -4500.0, -yaw_change_deadzone, -deg2rad(90.0), 0.0);
+        desired_yaw_rate = remap(yaw_ctrl, -4500.0, -yaw_change_deadzone, -deg2rad(yaw_rate_degree_max), 0.0);
 
-    float yaw0 = initial_yaw + desired_yaw_change;
-    constrain_angle(yaw0);
-    // const float X0[NUM_COL] = {x0, y0, z0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-    const float X0[NUM_COL] = {0, 0, z0, roll0, pitch0, yaw0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+    // float yaw0 = initial_yaw + desired_yaw_change;
+    // constrain_angle(yaw0);
+    const float X0[NUM_COL] = {0, 0, 0.0, roll0, pitch0, 0.0f, 0.0f, 0.0f, -vz0, 0.0f, 0.0f, desired_yaw_rate};
 
     // Compute the desired thrust.
     // u = -K(X - X0) + u0.
@@ -407,30 +466,38 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
     }
     // Take care of the yaw difference so that the abs value of the difference is smaller
     // than pi.
-    float yaw_diff = X_minus_X0[5];
-    constrain_angle(yaw_diff);
-    X_minus_X0[5] = yaw_diff;
+    for (int i = 3;i < 6;++i) {
+        wrap2PI(X_minus_X0[i]);
+    }
 
     float K_times_X_minus_X0[MAX_ROTOR_IN_COPTER];
     for (int i = 0; i < MAX_ROTOR_IN_COPTER; ++i) {
         K_times_X_minus_X0[i] = 0.0f;
         for (int j = 0; j < NUM_COL; ++j) {
-            K_times_X_minus_X0[i] += K[i][j] * X_minus_X0[j];
+            K_times_X_minus_X0[i] += K[i][j] * (X_minus_X0[j] + int_diff[j]);
         }
     }
+
+    int_diff[3] += X_minus_X0[3] * 0.002;
+    int_diff[4] += X_minus_X0[4] * 0.002;
+    int_diff[11] += X_minus_X0[11] * 0.002;
+
     for (int i = 0; i < MAX_ROTOR_IN_COPTER; ++i) {
         _thrust_rpyt_out[i] = -K_times_X_minus_X0[i] + u0[i];
     }
 
+
+
     // save info to copter
+    
     _copter.real_x = x; _copter.real_y = y; _copter.real_z = z;
     _copter.real_roll = roll; _copter.real_pitch = pitch; _copter.real_yaw = yaw;
     _copter.real_vx = vx; _copter.real_vy = vy; _copter.real_vz = vz;
     _copter.real_rollspeed = rollspeed; _copter.real_pitchspeed = pitchspeed; _copter.real_yawspeed = yawspeed;
-    _copter.desired_z = z0;
+    _copter.desired_vz = vz0;
     _copter.desired_roll = roll0;
     _copter.desired_pitch = pitch0;
-    _copter.desired_yaw = yaw0;
+    _copter.desired_yaw_rate = desired_yaw_rate;
     _copter.desired_thrust[0] = _thrust_rpyt_out[0]; 
     _copter.desired_thrust[1] = _thrust_rpyt_out[1];
     _copter.desired_thrust[2] = _thrust_rpyt_out[2];
