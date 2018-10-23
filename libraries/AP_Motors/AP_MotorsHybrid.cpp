@@ -408,7 +408,8 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
     const float rollspeed = _copter.get_roll_rate();
     const float pitchspeed = _copter.get_pitch_rate();
     const float yawspeed = _copter.get_yaw_rate();
-    const float X[NUM_COL] = {x, y, z, roll, pitch, yaw, vx, vy, vz, rollspeed, pitchspeed, yawspeed};
+    // const float X[NUM_COL] = {x, y, z, roll, pitch, yaw, vx, vy, vz, rollspeed, pitchspeed, yawspeed};
+    const float X[NUM_COL] = {x, y, z, roll, pitch, yaw, 0, 0, vz, rollspeed, pitchspeed, yawspeed};
 
     // Get desired states.
     const float x0 = 0;
