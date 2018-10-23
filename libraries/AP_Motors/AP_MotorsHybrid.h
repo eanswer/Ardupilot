@@ -30,7 +30,8 @@ protected:
     // output - sends commands to the motors
     void                output_armed_stabilizing();
     void                thrust_compensation(void) override;
-
+    void                run_NN_controller(float input[], float output[]);
+    
 private:
     // Points to the Copter class so that we can get all kinds of sensor's data.
     Copter&       _copter;

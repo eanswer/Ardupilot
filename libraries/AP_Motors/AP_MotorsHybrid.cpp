@@ -21,6 +21,7 @@
  #include "../../ArduCopter/Copter.h"
 #include <AP_HAL/AP_HAL.h>
 #include "AP_MotorsHybrid.h"
+#include "NN_Controller_Param.h"
 
 #define QUAD_ROTOR  1
 #define FIVE_ROTOR  2
@@ -43,21 +44,10 @@
 #define YAW_VEL_COL 11
 #define NUM_COL     12
 
+#define STATE_SIZE  12
+
 #if COPTER_NAME == HYBRID_COPTER
  #define MAX_ROTOR_IN_COPTER 4
-// Q = [1 1 1 5 5 2 2 2 5 2 2 10]. R = [5 5 5 5]. Mass = 1.034kg.
-const float K[MAX_ROTOR_IN_COPTER][NUM_COL] = {
-{-0.223624f,-0.223598f,-0.223599f,-2.024983f,2.025209f,0.316228f,-0.438681f,-0.438630f,-0.604446f,-0.462194f,0.462238f,0.930210f,},
-{0.223590f,0.223616f,-0.223615f,2.025144f,-2.024918f,0.316228f,0.438615f,0.438666f,-0.604489f,0.462227f,-0.462183f,0.930210f,},
-{-0.223624f,0.223616f,-0.223581f,2.025146f,2.025218f,-0.316228f,-0.438681f,0.438666f,-0.604397f,0.462228f,0.462246f,-0.930210f,},
-{0.223590f,-0.223598f,-0.223633f,-2.024985f,-2.024913f,-0.316228f,0.438614f,-0.438630f,-0.604539f,-0.462194f,-0.462177f,-0.930210f,},
-};
-const float u0[MAX_ROTOR_IN_COPTER] = {
-    2.5284f,
-    2.5284f,
-    2.5284f,
-    2.5284f,
-};
 
 const float roll_pitch_degree_max = 20.0;
 const float yaw_rate_degree_max = 45.0;
@@ -115,114 +105,6 @@ float angle_diff(const float x, const float y) {
     float res = x - y;
     constrain_angle(res);
     return res;
-}
-
-float thrust2pwm_kde_14inch(const float thrust, const float voltage) {
-    // Reject unreasonable data.
-    if (thrust <= 0.0f || voltage <= 7.5f || voltage >= 13.0f) return 1000.0f;
-    // Output from matlab:
-    /*
-    Linear model Poly21:
-    a(x,y) = p00 + p10*x + p01*y + p20*x^2 + p11*x*y
-      where x is normalized by mean 1425 and std 201.8
-      and where y is normalized by mean 11.38 and std 0.3678
-    Coefficients (with 95% confidence bounds):
-      p00 =         3.4  (3.375, 3.424)
-      p10 =       3.324  (3.306, 3.341)
-      p01 =      0.2254  (0.2078, 0.2431)
-      p20 =      0.7846  (0.7648, 0.8043)
-      p11 =      0.1704  (0.1526, 0.1883)
-    */
-    const float mean_throttle = 1425.0f;
-    const float std_throttle = 201.8140f;
-    const float mean_voltage = 11.3775f;
-    const float std_voltage = 0.3678f;
-    const float p00 = 3.4f;
-    const float p10 = 3.324f;
-    const float p01 = 0.2254f;
-    const float p20 = 0.7846f;
-    const float p11 = 0.1704f;
-    const float y = (voltage - mean_voltage) / std_voltage;
-    const float a = p20;
-    const float b = p11 * y + p10;
-    const float c = p01 * y + p00 - thrust;
-    const float delta = b * b - 4 * a * c;
-    if (delta < 0.0f) return 1000.0f;
-    const float x = (-b + sqrtf(delta)) / 2.0f / a;
-    const float throttle = x * std_throttle + mean_throttle;
-    return clamp(throttle, 1000.0f, max_pwm);
-}
-
-float thrust2pwm_kde_10inch(const float thrust, const float voltage) {
-    // Output from matlab:
-    /*
-     Linear model Poly21:
-     a(x,y) = p00 + p10*x + p01*y + p20*x^2 + p11*x*y
-       where x is normalized by mean 1550 and std 274.1
-       and where y is normalized by mean 11.48 and std 0.3972
-     Coefficients (with 95% confidence bounds):
-       p00 =       2.827  (2.805, 2.848)
-       p10 =       2.037  (2.023, 2.052)
-       p01 =      0.1959  (0.1812, 0.2105)
-       p20 =      0.1797  (0.1633, 0.196)
-       p11 =      0.1362  (0.1215, 0.151)
-    */
-    // Reject unreasonable data.
-    if (thrust <= 0.0f || voltage <= 7.5f || voltage >= 13.0f) return 1000.0f;
-    const float mean_throttle = 1550.0f;
-    const float std_throttle = 274.1f;
-    const float mean_voltage = 11.48f;
-    const float std_voltage = 0.3972f;
-    const float p00 = 2.827f;
-    const float p10 = 2.037f;
-    const float p01 = 0.1959f;
-    const float p20 = 0.1797f;
-    const float p11 = 0.1362f;
-    const float y = (voltage - mean_voltage) / std_voltage;
-    const float a = p20;
-    const float b = p11 * y + p10;
-    const float c = p01 * y + p00 - thrust;
-    const float delta = b * b - 4 * a * c;
-    if (delta < 0.0f) return 1000.0f;
-    const float x = (-b + sqrtf(delta)) / 2.0f / a;
-    const float throttle = x * std_throttle + mean_throttle;
-    return clamp(throttle, 1000.0f, max_pwm);
-}
-
-float thrust2pwm_black_bi(const float thrust, const float voltage) {
-    // Output from matlab:
-    /*
-     Linear model Poly21:
-     a(x,y) = p00 + p10*x + p01*y + p20*x^2 + p11*x*y
-       where x is normalized by mean 1525 and std 231.9428
-       and where y is normalized by mean 11.2309 and std 0.2273
-     Coefficients (with 95% confidence bounds):
-       p00 =       1.577  (1.56, 1.594)
-       p10 =       1.405  (1.377, 1.433)
-       p01 =     0.01139  (-0.01619, 0.03897)
-       p20 =      0.2806  (0.2549, 0.3062)
-       p11 =     0.03498  (0.01467, 0.0553)
-    */
-    // Reject unreasonable data.
-    if (thrust <= 0.0f || voltage <= 7.5f || voltage >= 13.0f) return 1000.0f;
-    const float mean_throttle = 1525.0f;
-    const float std_throttle = 231.9428f;
-    const float mean_voltage = 11.2309f;
-    const float std_voltage = 0.2273f;
-    const float p00 = 1.577f;
-    const float p10 = 1.405f;
-    const float p01 = 0.01139f;
-    const float p20 = 0.2806f;
-    const float p11 = 0.03498f;
-    const float y = (voltage - mean_voltage) / std_voltage;
-    const float a = p20;
-    const float b = p11 * y + p10;
-    const float c = p01 * y + p00 - thrust;
-    const float delta = b * b - 4 * a * c;
-    if (delta < 0.0f) return 1000.0f;
-    const float x = (-b + sqrtf(delta)) / 2.0f / a;
-    const float throttle = x * std_throttle + mean_throttle;
-    return clamp(throttle, 1000.0f, max_pwm);
 }
 
 float thrust2pwm_dji_set(const float thrust, const float voltage) {
@@ -288,7 +170,6 @@ void AP_MotorsHybrid::output_to_motors() {
         voltage_sum += _copter.get_battery_voltage();
     }
     // estimate voltage by _batt_voltage_filt.get() * _batt_voltage_max
-
     switch (_spool_mode) {
         case SHUT_DOWN: {
             // sends minimum values out to the motors
@@ -345,36 +226,51 @@ void AP_MotorsHybrid::output_to_motors() {
     _copter.spool_mode = (int)_spool_mode;
 }
 
-void AP_MotorsHybrid::output_armed_stabilizing() {
-    /*{
-        if (!initialization_finished) {
-            float now_yaw = _copter.get_yaw();
-            if (yaw_count == 0) {
-                initial_yaw_sum = now_yaw;
-                yaw_count = 1;
-            } else {
-                float estimated_initial_yaw = (float)(initial_yaw_sum / yaw_count);
-                if (angle_diff(estimated_initial_yaw, now_yaw) > deg2rad(30)) {
-                    initial_yaw_sum = now_yaw;
-                    yaw_count = 1;
-                } else {
-                    if (fabs(estimated_initial_yaw - now_yaw) > deg2rad(180)) {
-                        if (estimated_initial_yaw > now_yaw)
-                            now_yaw += 2.0 * PI;
-                        else
-                            now_yaw -= 2.0 * PI;
-                    }
-                    initial_yaw_sum += now_yaw;
-                    yaw_count ++;
-                }
-            }
-            if (yaw_count == 100) {
-                initial_yaw = (float)(initial_yaw_sum / yaw_count);
-                constrain_angle(initial_yaw);
-                initialization_finished = true;
+void AP_MotorsHybrid::run_NN_controller(float input[], float output[]) {
+    float forward_res[MAX_HIDDEN_LAYER_SIZE];
+    for (int i = 0;i < NUM_HIDDEN_LAYERS + 1;++i) {
+        int input_size, output_size;
+        float tmp_res[MAX_HIDDEN_LAYER_SIZE];
+        
+        if (i == 0) {
+            input_size = STATE_SIZE;
+        } else {
+            input_size = hidden_layer_size[i - 1];
+        }
+
+        if (i == NUM_HIDDEN_LAYERS) {
+            output_size = MAX_ROTOR_IN_COPTER;
+        } else {
+            output_size = hidden_layer_size[i];
+        }
+
+        for (int k = 0;k < output_size;++k) {
+            tmp_res[k] = B[i][k];
+            for (int j = 0;j < input_size;++j) {
+                tmp_res[k] += forward_res[j] * W[i][j][k];
             }
         }
-    }*/
+
+        if (i < NUM_HIDDEN_LAYERS) {
+            if (ACTIVATION_FUNC == 1) {
+                // tanh
+            } else (ACTIVATION_FUNC == 2) {
+                // relu
+            }
+        }
+
+        for (int j = 0;j < output_size;++j) {
+            forward_res[j] = tmp_res[j];
+        }
+    }
+
+    for (int i = 0;i < MAX_ROTOR_IN_COPTER;++i) {
+        output[i] = forward_res[i];
+    }
+}
+
+void AP_MotorsHybrid::output_armed_stabilizing() {
+    // estimate voltage
     {
         float   throttle_thrust;            // throttle thrust input value, 0.0 - 1.0
 
@@ -393,11 +289,9 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
     // Get current states:
     const float x = 0;
     const float y = 0;
-    // const float z = -_copter.get_altitude(); // get altitude
     const float z = 0;
     const float roll = _copter.get_roll();
     const float pitch = _copter.get_pitch();
-    // const float yaw = _copter.get_yaw();
     const float yaw = 0;
     // get velocities
     const Vector3f velocity_ef = _copter.get_ned_velocity();
@@ -454,12 +348,9 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
     else
         desired_yaw_rate = remap(yaw_ctrl, -4500.0, -yaw_change_deadzone, -deg2rad(yaw_rate_degree_max), 0.0);
 
-    // float yaw0 = initial_yaw + desired_yaw_change;
-    // constrain_angle(yaw0);
     const float X0[NUM_COL] = {0, 0, 0.0, roll0, pitch0, 0.0f, 0.0f, 0.0f, -vz0, 0.0f, 0.0f, desired_yaw_rate};
 
-    // Compute the desired thrust.
-    // u = -K(X - X0) + u0.
+    // Compute the controller input
     float X_minus_X0[NUM_COL];
     for (int i = 0; i < NUM_COL; ++i) {
         X_minus_X0[i] = X[i] - X0[i];
@@ -470,23 +361,7 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
         wrap2PI(X_minus_X0[i]);
     }
 
-    float K_times_X_minus_X0[MAX_ROTOR_IN_COPTER];
-    for (int i = 0; i < MAX_ROTOR_IN_COPTER; ++i) {
-        K_times_X_minus_X0[i] = 0.0f;
-        for (int j = 0; j < NUM_COL; ++j) {
-            K_times_X_minus_X0[i] += K[i][j] * (X_minus_X0[j] + int_diff[j]);
-        }
-    }
-
-    int_diff[3] += X_minus_X0[3] * 0.002;
-    int_diff[4] += X_minus_X0[4] * 0.002;
-    int_diff[11] += X_minus_X0[11] * 0.002;
-
-    for (int i = 0; i < MAX_ROTOR_IN_COPTER; ++i) {
-        _thrust_rpyt_out[i] = -K_times_X_minus_X0[i] + u0[i];
-    }
-
-
+    run_NN_controller(X_minus_X0, _thrust_rpyt_out);
 
     // save info to copter
     
