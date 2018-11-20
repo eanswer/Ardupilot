@@ -292,6 +292,41 @@ void Copter::Log_Write_Nav_Tuning()
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
+struct PACKED log_Sensor_State {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float   z;
+    float   roll;
+    float   pitch;
+    float   yaw;
+    float   v_N;
+    float   v_E;
+    float   v_D;
+    float   v_roll;
+    float   v_pitch;
+    float   v_yaw;
+    float   battery;
+};
+
+void Copter::Log_Write_Sensor_State() {
+    struct log_Sensor_State pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_SENSOR_STATE_MSG),
+        time_us             : AP_HAL::micros64(),
+        z                   : sensor_state_z,
+        roll                : sensor_state_roll,
+        pitch               : sensor_state_pitch,
+        yaw                 : sensor_state_yaw,
+        v_N                 : sensor_state_v_N,
+        v_E                 : sensor_state_v_E,
+        v_D                 : sensor_state_v_D,
+        v_roll              : sensor_state_v_roll,
+        v_pitch             : sensor_state_v_pitch,
+        v_yaw               : sensor_state_v_yaw,
+        battery             : sensor_state_battery
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
 struct PACKED log_Control_Tuning {
     LOG_PACKET_HEADER;
     uint64_t time_us;
@@ -880,6 +915,8 @@ const struct LogStructure Copter::log_structure[] = {
       "THRO",  "QBffffbbbb",  "TimeUS,Stage,Vel,VelZ,Acc,AccEfZ,Throw,AttOk,HgtOk,PosOk" },
     { LOG_PROXIMITY_MSG, sizeof(log_Proximity),
       "PRX",   "QBfffffffffff","TimeUS,Health,D0,D45,D90,D135,D180,D225,D270,D315,DUp,CAn,CDis" },
+    { LOG_SENSOR_STATE_MSG, sizeof(log_Sensor_State),
+      "SENS",  "Qfffffffffff", "TimeUS,z,r,p,y,vN,vE,vD,dr,dp,dy,volt"},
 };
 
 #if CLI_ENABLED == ENABLED

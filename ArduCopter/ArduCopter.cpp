@@ -418,9 +418,29 @@ void Copter::ten_hz_logging_loop()
         Log_Write_Proximity();
         Log_Write_Beacon();
     }
+    // log write sensor state
+    collect_sensor_state();
+    Log_Write_Sensor_State();
+    
 #if FRAME_CONFIG == HELI_FRAME
     Log_Write_Heli();
 #endif
+}
+
+// Jie Xu
+void Copter::collect_sensor_state() {
+    sensor_state_z = inertial_nav.get_altitude() / 100.0f;
+    sensor_state_roll = ahrs.roll;
+    sensor_state_pitch = ahrs.pitch;
+    sensor_state_yaw = ahrs.yaw;
+    const Vector3f& velocity_neu = inertial_nav.get_velocity() / 100.0f;
+    sensor_state_v_N = velocity_neu.x;
+    sensor_state_v_E = velocity_neu.y;
+    sensor_state_v_D = - velocity_neu.z;
+    sensor_state_v_roll = ahrs.get_gyro().x;
+    sensor_state_v_pitch = ahrs.get_gyro().y;
+    sensor_state_v_yaw = ahrs.get_gyro().z;
+    sensor_state_battery = battery.voltage();
 }
 
 // twentyfive_hz_logging - should be run at 25hz

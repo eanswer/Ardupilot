@@ -721,6 +721,7 @@ private:
     void Log_Write_Optflow();
     void Log_Write_Nav_Tuning();
     void Log_Write_Control_Tuning();
+    void Log_Write_Sensor_State();
     void Log_Write_Performance();
     void Log_Write_Attitude();
     void Log_Write_EKF_POS();
@@ -1175,6 +1176,15 @@ public:
     int8_t test_rangefinder(uint8_t argc, const Menu::arg *argv);
 
     int8_t reboot_board(uint8_t argc, const Menu::arg *argv);
+
+    // Jie Xu
+    // variables for sensor state
+    void collect_sensor_state();
+    float sensor_state_z;
+    float sensor_state_roll, sensor_state_pitch, sensor_state_yaw;
+    float sensor_state_v_N, sensor_state_v_E, sensor_state_v_D;
+    float sensor_state_v_roll, sensor_state_v_pitch, sensor_state_v_yaw;
+    float sensor_state_battery;
 };
 
 #define MENU_FUNC(func) FUNCTOR_BIND(&copter, &Copter::func, int8_t, uint8_t, const Menu::arg *)
