@@ -391,6 +391,7 @@ void Copter::ten_hz_logging_loop()
 {
     // log attitude data if we're not already logging at the higher rate
     if (should_log(MASK_LOG_ATTITUDE_MED) && !should_log(MASK_LOG_ATTITUDE_FAST)) {
+        // Attitude Package output roll, pitch, yaw
         Log_Write_Attitude();
         Log_Write_EKF_POS();
     }
