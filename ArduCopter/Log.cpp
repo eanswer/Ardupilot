@@ -250,7 +250,7 @@ void Copter::Log_Write_Optflow()
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
  #endif     // OPTFLOW == ENABLED
 }
-/*
+
 struct PACKED log_Nav_Tuning {
     LOG_PACKET_HEADER;
     uint64_t time_us;
@@ -338,92 +338,77 @@ void Copter::Log_Write_Control_Tuning()
         climb_rate          : climb_rate
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
-}*/
+}
 
-struct PACKED log_Nav_Tuning {
+// Jie Xu
+// For LQR Log
+
+struct PACKED log_LQR_X {
     LOG_PACKET_HEADER;
     uint64_t time_us;
-    float    desired_pos_x; // z
-    float    desired_pos_y;  // roll
-    float    pos_x; // pitch
-    float    pos_y; // yaw
-    float    desired_vel_x; // vx
-    float    desired_vel_y; // vy
-    float    vel_x; // vz
-    float    vel_y; // rollspeed
-    float    desired_accel_x; // pitchspeed
-    float    desired_accel_y; // yawspeed
+    float    z;
+    float    roll;
+    float    pitch;
+    float    yaw;
+    float    vx;
+    float    vy;
+    float    vz;
+    float    roll_rate;
+    float    pitch_rate;
+    float    yaw_rate;
 };
 
-// Write an Nav Tuning packet
-void Copter::Log_Write_Nav_Tuning()
+void Copter::Log_Write_LQR_X()
 {
-    const Vector3f &pos_target = pos_control->get_pos_target();
-    const Vector3f &vel_target = pos_control->get_vel_target();
-    const Vector3f &accel_target = pos_control->get_accel_target();
-    const Vector3f &position = inertial_nav.get_position();
-    const Vector3f &velocity = inertial_nav.get_velocity();
-
-    struct log_Nav_Tuning pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_NAV_TUNING_MSG),
+    struct log_LQR_X pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_LQR_X_MSG),
         time_us         : AP_HAL::micros64(),
-        desired_pos_x   : real_z,
-        desired_pos_y   : real_roll,
-        pos_x           : real_pitch,
-        pos_y           : real_yaw,
-        desired_vel_x   : real_vx,
-        desired_vel_y   : real_vy,
-        vel_x           : real_vz,
-        vel_y           : real_rollspeed,
-        desired_accel_x : real_pitchspeed,
-        desired_accel_y : real_yawspeed
+        z               : real_z,
+        roll            : real_roll,
+        pitch           : real_pitch,
+        yaw             : real_yaw,
+        vx              : real_vx,
+        vy              : real_vy,
+        vz              : real_vz,
+        roll_rate       : real_rollspeed,
+        pitch_rate      : real_pitchspeed,
+        yaw_rate        : real_yawspeed
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
-struct PACKED log_Control_Tuning {
+struct PACKED log_LQR_X0 {
     LOG_PACKET_HEADER;
     uint64_t time_us;
-    float    throttle_in;   // desired_z
-    float    angle_boost; // desired_thrust[0]
-    float    throttle_out; // desired_roll
-    float    throttle_hover; // desired_pitch
-    float    desired_alt; // desired_yaw_rate
-    float    inav_alt;    // desired_thrust_sum
-    int32_t  baro_alt;    // spool_mode
-    int16_t  desired_rangefinder_alt;   
-    int16_t  rangefinder_alt;  // throttle_in
-    float    terr_alt;    // real_battery
-    int16_t  target_climb_rate;
-    int16_t  climb_rate;
+    float    target_z;   
+    float    target_roll;
+    float    target_pitch;
+    float    target_yaw;
+    float    target_vx; 
+    float    target_vy;
+    float    target_vz;
+    float    target_roll_rate;
+    float    target_pitch_rate;
+    float    target_yaw_rate;
+    float    voltage;
 };
 
-// Write a control tuning packet
-void Copter::Log_Write_Control_Tuning()
+void Copter::Log_Write_LQR_X0()
 {
-    // get terrain altitude
-    float terr_alt = 0.0f;
-#if AP_TERRAIN_AVAILABLE && AC_TERRAIN
-    if (terrain.height_above_terrain(terr_alt, true)) {
-        terr_alt = 0.0f;
-    }
-#endif
-
-    struct log_Control_Tuning pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_CONTROL_TUNING_MSG),
+    struct log_LQR_X0 pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_LQR_X0_MSG),
         time_us             : AP_HAL::micros64(),
-        throttle_in         : desired_vz,
-        angle_boost         : desired_thrust[0],
-        throttle_out        : desired_roll,
-        throttle_hover      : desired_pitch,
-        desired_alt         : desired_yaw_rate,
-        inav_alt            : desired_thrust[0] + desired_thrust[1] + desired_thrust[2] + desired_thrust[3],
-        baro_alt            : spool_mode,
-        desired_rangefinder_alt : thr_ctrl_in,
-        rangefinder_alt     : get_channel_throttle_control_in(),
-        terr_alt            : real_battery,
-        target_climb_rate   : (int16_t)pos_control->get_vel_target_z(),
-        climb_rate          : climb_rate
+        target_z            : X0[2],
+        target_roll         : X0[3],
+        target_pitch        : X0[4],
+        target_yaw          : X0[5],
+        target_vx           : X0[6],
+        target_vy           : X0[7],
+        target_vz           : X0[8],
+        target_roll_rate    : X0[9],
+        target_pitch_rate   : X0[10],
+        target_yaw_rate     : X0[11],
+        voltage             : real_battery
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -969,6 +954,10 @@ const struct LogStructure Copter::log_structure[] = {
       "THRO",  "QBffffbbbb",  "TimeUS,Stage,Vel,VelZ,Acc,AccEfZ,Throw,AttOk,HgtOk,PosOk" },
     { LOG_PROXIMITY_MSG, sizeof(log_Proximity),
       "PRX",   "QBfffffffffff","TimeUS,Health,D0,D45,D90,D135,D180,D225,D270,D315,DUp,CAn,CDis" },
+    { LOG_LQR_X_MSG, sizeof(log_LQR_X),
+      "LQRX",  "Qffffffffff", "TimeUS,z,roll,pitch,yaw,vx,vy,vz,vroll,vpitc,vyaw"},
+    { LOG_LQR_X0_MSG, sizeof(log_LQR_X0),
+      "LQX0",  "Qfffffffffff", "TimeUS,z0,roll0,pitc0,yaw0,vx0,vy0,vz0,vrol0,vpit0,vyaw0,volt"},
 };
 
 #if CLI_ENABLED == ENABLED

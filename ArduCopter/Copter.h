@@ -230,7 +230,7 @@ public:
     }
     // Controller Infomation
     float real_x, real_y, real_z, real_roll, real_pitch, real_yaw, real_vx, real_vy, real_vz, real_rollspeed, real_pitchspeed, real_yawspeed;
-    float desired_vz, desired_roll, desired_pitch, desired_yaw_rate;
+    float X0[12];
     float pwm_out[4], desired_thrust[4];
     float real_battery;
     int   spool_mode;
@@ -824,6 +824,10 @@ private:
     void Log_Write_Parameter_Tuning(uint8_t param, float tuning_val, int16_t control_in, int16_t tune_low, int16_t tune_high);
     void Log_Write_Home_And_Origin();
     void Log_Sensor_Health();
+    // Jie Xu
+    // For LQR state log
+    void Log_Write_LQR_X();
+    void Log_Write_LQR_X0();
 #if FRAME_CONFIG == HELI_FRAME
     void Log_Write_Heli(void);
 #endif

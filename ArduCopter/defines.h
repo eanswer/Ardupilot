@@ -320,6 +320,10 @@ enum DevOptions {
 #define LOG_GUIDEDTARGET_MSG            0x22
 #define LOG_THROW_MSG                   0x23
 #define LOG_PROXIMITY_MSG               0x24
+// Jie Xu
+// For LQR Log
+#define LOG_LQR_X_MSG                   0x25
+#define LOG_LQR_X0_MSG                  0x26
 
 #define MASK_LOG_ATTITUDE_FAST          (1<<0)
 #define MASK_LOG_ATTITUDE_MED           (1<<1)
