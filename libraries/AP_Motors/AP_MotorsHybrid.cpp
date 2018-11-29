@@ -22,49 +22,27 @@
 #include <AP_HAL/AP_HAL.h>
 #include "AP_MotorsHybrid.h"
 
-#define QUAD_ROTOR  1
-#define FIVE_ROTOR  2
-#define BUNNY_ROTOR 3
-
-#define COPTER_NAME       HYBRID_COPTER
-
 // The meaning of each column
-#define X_COL       0
-#define Y_COL       1
-#define Z_COL       2
-#define ROL_COL     3
-#define PIT_COL     4
-#define YAW_COL     5
-#define X_VEL_COL   6
-#define Y_VEL_COL   7
-#define Z_VEL_COL   8
-#define ROL_VEL_COL 9
-#define PIT_VEL_COL 10
-#define YAW_VEL_COL 11
-#define NUM_COL     12
+#define ANGLE_AXIS_X        0
+#define ANGLE_AXIS_Y        1
+#define ANGLE_AXIS_Z        2
+#define V_X                 3
+#define V_Y                 4
+#define V_Z                 5
+#define OMEGA_X             6
+#define OMEGA_Y             7
+#define OMEGA_Z             8
+#define TARGET_VX           9
+#define TARGET_VY           10
 
-#if COPTER_NAME == HYBRID_COPTER
- #define MAX_ROTOR_IN_COPTER 4
-// Q = [1 1 1 5 5 2 2 2 5 2 2 10]. R = [5 5 5 5]. Mass = 1.034kg.
-const float K[MAX_ROTOR_IN_COPTER][NUM_COL] = {
-{-0.223624f,-0.223598f,-0.223599f,-2.024983f,2.025209f,0.316228f,-0.438681f,-0.438630f,-0.604446f,-0.462194f,0.462238f,0.930210f,},
-{0.223590f,0.223616f,-0.223615f,2.025144f,-2.024918f,0.316228f,0.438615f,0.438666f,-0.604489f,0.462227f,-0.462183f,0.930210f,},
-{-0.223624f,0.223616f,-0.223581f,2.025146f,2.025218f,-0.316228f,-0.438681f,0.438666f,-0.604397f,0.462228f,0.462246f,-0.930210f,},
-{0.223590f,-0.223598f,-0.223633f,-2.024985f,-2.024913f,-0.316228f,0.438614f,-0.438630f,-0.604539f,-0.462194f,-0.462177f,-0.930210f,},
-};
-const float u0[MAX_ROTOR_IN_COPTER] = {
-    2.5284f,
-    2.5284f,
-    2.5284f,
-    2.5284f,
-};
+#define NUM_STATE             11
+#define NUM_ROTORS          4
 
-const float roll_pitch_degree_max = 20.0;
-const float yaw_rate_degree_max = 45.0;
-const float altitude_rate_max = 2.0;
+const float min_vx = 0.0f;
+const float max_vx = 6.0f;
+const float min_vz = -1.0f;
+const float max_vz = 1.0f;
 const float max_pwm = 2000.0f;
-
-#endif
 
 // For voltage estimation.
 static int last_frame = 0;
@@ -114,114 +92,6 @@ float angle_diff(const float a, const float b) {
     float x = a - b;
     wrap2PI(x);
     return x;
-}
-
-float thrust2pwm_kde_14inch(const float thrust, const float voltage) {
-    // Reject unreasonable data.
-    if (thrust <= 0.0f || voltage <= 7.5f || voltage >= 13.0f) return 1000.0f;
-    // Output from matlab:
-    /*
-    Linear model Poly21:
-    a(x,y) = p00 + p10*x + p01*y + p20*x^2 + p11*x*y
-      where x is normalized by mean 1425 and std 201.8
-      and where y is normalized by mean 11.38 and std 0.3678
-    Coefficients (with 95% confidence bounds):
-      p00 =         3.4  (3.375, 3.424)
-      p10 =       3.324  (3.306, 3.341)
-      p01 =      0.2254  (0.2078, 0.2431)
-      p20 =      0.7846  (0.7648, 0.8043)
-      p11 =      0.1704  (0.1526, 0.1883)
-    */
-    const float mean_throttle = 1425.0f;
-    const float std_throttle = 201.8140f;
-    const float mean_voltage = 11.3775f;
-    const float std_voltage = 0.3678f;
-    const float p00 = 3.4f;
-    const float p10 = 3.324f;
-    const float p01 = 0.2254f;
-    const float p20 = 0.7846f;
-    const float p11 = 0.1704f;
-    const float y = (voltage - mean_voltage) / std_voltage;
-    const float a = p20;
-    const float b = p11 * y + p10;
-    const float c = p01 * y + p00 - thrust;
-    const float delta = b * b - 4 * a * c;
-    if (delta < 0.0f) return 1000.0f;
-    const float x = (-b + sqrtf(delta)) / 2.0f / a;
-    const float throttle = x * std_throttle + mean_throttle;
-    return clamp(throttle, 1000.0f, max_pwm);
-}
-
-float thrust2pwm_kde_10inch(const float thrust, const float voltage) {
-    // Output from matlab:
-    /*
-     Linear model Poly21:
-     a(x,y) = p00 + p10*x + p01*y + p20*x^2 + p11*x*y
-       where x is normalized by mean 1550 and std 274.1
-       and where y is normalized by mean 11.48 and std 0.3972
-     Coefficients (with 95% confidence bounds):
-       p00 =       2.827  (2.805, 2.848)
-       p10 =       2.037  (2.023, 2.052)
-       p01 =      0.1959  (0.1812, 0.2105)
-       p20 =      0.1797  (0.1633, 0.196)
-       p11 =      0.1362  (0.1215, 0.151)
-    */
-    // Reject unreasonable data.
-    if (thrust <= 0.0f || voltage <= 7.5f || voltage >= 13.0f) return 1000.0f;
-    const float mean_throttle = 1550.0f;
-    const float std_throttle = 274.1f;
-    const float mean_voltage = 11.48f;
-    const float std_voltage = 0.3972f;
-    const float p00 = 2.827f;
-    const float p10 = 2.037f;
-    const float p01 = 0.1959f;
-    const float p20 = 0.1797f;
-    const float p11 = 0.1362f;
-    const float y = (voltage - mean_voltage) / std_voltage;
-    const float a = p20;
-    const float b = p11 * y + p10;
-    const float c = p01 * y + p00 - thrust;
-    const float delta = b * b - 4 * a * c;
-    if (delta < 0.0f) return 1000.0f;
-    const float x = (-b + sqrtf(delta)) / 2.0f / a;
-    const float throttle = x * std_throttle + mean_throttle;
-    return clamp(throttle, 1000.0f, max_pwm);
-}
-
-float thrust2pwm_black_bi(const float thrust, const float voltage) {
-    // Output from matlab:
-    /*
-     Linear model Poly21:
-     a(x,y) = p00 + p10*x + p01*y + p20*x^2 + p11*x*y
-       where x is normalized by mean 1525 and std 231.9428
-       and where y is normalized by mean 11.2309 and std 0.2273
-     Coefficients (with 95% confidence bounds):
-       p00 =       1.577  (1.56, 1.594)
-       p10 =       1.405  (1.377, 1.433)
-       p01 =     0.01139  (-0.01619, 0.03897)
-       p20 =      0.2806  (0.2549, 0.3062)
-       p11 =     0.03498  (0.01467, 0.0553)
-    */
-    // Reject unreasonable data.
-    if (thrust <= 0.0f || voltage <= 7.5f || voltage >= 13.0f) return 1000.0f;
-    const float mean_throttle = 1525.0f;
-    const float std_throttle = 231.9428f;
-    const float mean_voltage = 11.2309f;
-    const float std_voltage = 0.2273f;
-    const float p00 = 1.577f;
-    const float p10 = 1.405f;
-    const float p01 = 0.01139f;
-    const float p20 = 0.2806f;
-    const float p11 = 0.03498f;
-    const float y = (voltage - mean_voltage) / std_voltage;
-    const float a = p20;
-    const float b = p11 * y + p10;
-    const float c = p01 * y + p00 - thrust;
-    const float delta = b * b - 4 * a * c;
-    if (delta < 0.0f) return 1000.0f;
-    const float x = (-b + sqrtf(delta)) / 2.0f / a;
-    const float throttle = x * std_throttle + mean_throttle;
-    return clamp(throttle, 1000.0f, max_pwm);
 }
 
 float thrust2pwm_dji_set(const float thrust, const float voltage) {
@@ -337,6 +207,119 @@ void AP_MotorsHybrid::output_to_motors() {
     _copter.pwm_out[0] = motor_out[0]; _copter.pwm_out[1] = motor_out[1]; _copter.pwm_out[2] = motor_out[2]; _copter.pwm_out[3] = motor_out[3];
     _copter.real_battery = average_voltage;
     _copter.spool_mode = (int)_spool_mode;
+}
+
+void AP_MotorsHybrid::get_observation_vector(float ob[]) {
+    float state[NUM_STATE];
+    get_state(state);
+    for (int i = 0;i < NUM_STATE;i++) {
+        ob[i] = state[i];
+    }
+    ob[NUM_STATE] = target_vx;
+    ob[NUM_STATE + 1] = target_vz;
+}
+
+void AP_MotorsHybrid::get_state(float state[]) {
+    collect_rpy();
+
+    float angle_axis[3];
+    get_angle_axis(angle_axis);
+
+    float vel[3];
+    get_velocity(vel);
+
+    float omega[3];
+    get_angular_velocity(omega);
+
+    state[0] = angle_axis[0]; state[1] = angle_axis[1]; state[2] = angle_axis[2];
+    state[3] = vel[0]; state[4] = vel[1]; state[5] = vel[2];
+    state[6] = omega[0]; state[7] = omega[1]; state[8] = omega[2];
+}
+
+void AP_MotorsHybrid::collect_rpy() {
+    roll = _copter.get_roll();
+    pitch = _copter.get_pitch();
+    yaw = _copter.get_yaw() - yaw_0;
+}
+
+Matrix3f AP_MotorsHybrid::get_rotation_matrix() {    
+    Matrix3f R_roll, R_pitch, R_yaw;
+    
+    R_roll[0][0] = 1; R_roll[0][1] = 0; R_roll[0][2] = 0;
+    R_roll[1][0] = 0; R_roll[1][1] = cos(roll); R_roll[1][2] = -sin(roll);
+    R_roll[2][0] = 0; R_roll[2][1] = sin(roll); R_roll[2][2] = cos(roll);
+
+    R_pitch[0][0] = cos(pitch); R_pitch[0][1] = 0; R_pitch[0][2] = sin(pitch);
+    R_pitch[1][0] = 0; R_pitch[1][1] = 1; R_pitch[1][2] = 0;
+    R_pitch[2][0] = -sin(pitch); R_pitch[2][1] = 0; R_pitch[2][2] = cos(pitch);
+
+    R_yaw[0][0] = cos(yaw); R_yaw[0][1] = -sin(yaw); R_yaw[0][2] = 0;
+    R_yaw[1][0] = sin(yaw); R_yaw[1][1] = cos(yaw); R_yaw[1][2] = 0;
+    R_yaw[2][0] = 0; R_yaw[2][1] = 0; R_yaw[2][2] = 1;
+
+    return R_yaw * R_pitch * R_roll;
+}
+
+void AP_MotorsHybrid::get_angle_axis(float angle_axis[]) {
+    // first convert rpy to unit quaternion
+    float cy = cos(yaw * 0.5);
+    float sy = sin(yaw * 0.5);
+    float cr = cos(roll * 0.5);
+    float sr = sin(roll * 0.5);
+    float cp = cos(pitch * 0.5);
+    float sp = sin(pitch * 0.5);
+
+    float w = cy * cr * cp + sy * sr * sp;
+    float x = cy * sr * cp - sy * cr * sp;
+    float y = cy * cr * sp + sy * sr * cp;
+    float z = sy * cr * cp - cy * sr * sp;
+
+    float len = sqrt(w * w + x * x + y * y + z * z);
+    w /= len; x /= len; y /= len; z /= len;
+
+    // convert unit quaternion to angle axis
+    float angle = 2.0 * acos(w);
+    float a = sqrt(1.0 - w * w);
+    float axis_x = x / a;
+    float axis_y = y / a;
+    float axis_z = z / a;
+
+    angle_axis[0] = axis_x * a;
+    angle_axis[1] = axis_y * a;
+    angle_axis[2] = axis_z * a;
+}
+
+void AP_MotorsHybrid::get_velocity(float vel[]) {
+    // coordination 0 (ned) rotate yaw to coordination 1 (our ned)
+    // R*v1 = v0
+    // v1 = R^T*v0
+    // R(yaw) = 
+    // [cos, -sin, 0]
+    // [sin,  cos, 0]
+    // [0,    0,   1]
+    const Vector3f velocity_ef = _copter.get_ned_velocity();
+    vel[0] = velocity_ef[0] * cos(yaw_0) + velocity_ef[1] * sin(yaw_0);
+    vel[1] = - velocity_ef[0] * sin(yaw_0) + velocity_ef[1] * cos(yaw_0);
+    vel[2] = velocity_ef[2];
+}
+
+void AP_MotorsHybrid::get_angular_velocity(float omega[]) {
+    // first convert roll_rate, pitch_rate, yaw_rate into body-frame angular velocity p_b, q_b, r_b
+    // based on MAV331 Lec9
+    // [p, q, r]' = [1, 0,           -sin(pitch)
+    //               0, cos(roll),   sin(roll)*cos(pitch)
+    //               0, -sin(roll),  cos(roll)*cos(pitch)]
+    // * [roll_rate, pitch_rate, yaw_rate]'
+    Matrix3f rpy_rate_to_pqr_matrix;
+    rpy_rate_to_pqr_matrix[0][0] = 1; rpy_rate_to_pqr_matrix[0][1] = 0; rpy_rate_to_pqr_matrix[0][2] = -sin(pitch);
+    rpy_rate_to_pqr_matrix[1][0] = 0; rpy_rate_to_pqr_matrix[1][1] = cos(roll); rpy_rate_to_pqr_matrix[1][2] = sin(roll) * cos(pitch);
+    rpy_rate_to_pqr_matrix[2][0] = 0; rpy_rate_to_pqr_matrix[2][1] = -sin(roll); rpy_rate_to_pqr_matrix[2][2] = cos(roll) * cos(pitch);
+
+    Vector3f rpy_rate(_copter.get_roll_rate(), _copter.get_pitch_rate(), _copter.get_yaw_rate());
+    Vector3f pqr_body = rpy_rate_to_pqr_matrix * rpy_rate;
+    
+    // then convert pqr body to pqr world
+    Vector3f pqr_world = get_rotation_matrix() * pqr_body;
 }
 
 void AP_MotorsHybrid::output_armed_stabilizing() {

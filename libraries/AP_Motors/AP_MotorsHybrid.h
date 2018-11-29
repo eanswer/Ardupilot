@@ -27,6 +27,14 @@ public:
     void                output_to_motors();
 
 protected:
+    void                get_observation_vector(float ob[]);
+    void                get_state(float state[]);
+    void                collect_rpy();
+    Matrix3f            get_rotation_matrix();
+    void                get_angle_axis(float angle_axis[]);
+    void                get_velocity(float vel[]);
+    void                get_angular_velocity(float omega[]);
+
     // output - sends commands to the motors
     void                output_armed_stabilizing();
     void                thrust_compensation(void) override;
@@ -34,6 +42,15 @@ protected:
 private:
     // Points to the Copter class so that we can get all kinds of sensor's data.
     Copter&       _copter;
+
+    // target
+    float target_vx, target_vz;
+    
+    // state
+    float roll, pitch, yaw;
+
+    // initial values
+    float yaw_0;
 
     bool initialization_finished;
     double initial_yaw_sum;

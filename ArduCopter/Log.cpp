@@ -341,74 +341,39 @@ void Copter::Log_Write_Control_Tuning()
 }
 
 // Jie Xu
-// For LQR Log
-
-struct PACKED log_LQR_X {
+// For NN controller input
+struct PACKED log_input {
     LOG_PACKET_HEADER;
     uint64_t time_us;
-    float    z;
-    float    roll;
-    float    pitch;
-    float    yaw;
+    float    angle_axis_x;
+    float    angle_axis_y;
+    float    angle_axis_z;
     float    vx;
     float    vy;
     float    vz;
-    float    roll_rate;
-    float    pitch_rate;
-    float    yaw_rate;
-};
-
-void Copter::Log_Write_LQR_X()
-{
-    struct log_LQR_X pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_LQR_X_MSG),
-        time_us         : AP_HAL::micros64(),
-        z               : real_z,
-        roll            : real_roll,
-        pitch           : real_pitch,
-        yaw             : real_yaw,
-        vx              : real_vx,
-        vy              : real_vy,
-        vz              : real_vz,
-        roll_rate       : real_rollspeed,
-        pitch_rate      : real_pitchspeed,
-        yaw_rate        : real_yawspeed
-    };
-    DataFlash.WriteBlock(&pkt, sizeof(pkt));
-}
-
-struct PACKED log_LQR_X0 {
-    LOG_PACKET_HEADER;
-    uint64_t time_us;
-    float    target_z;   
-    float    target_roll;
-    float    target_pitch;
-    float    target_yaw;
-    float    target_vx; 
-    float    target_vy;
+    float    omega_x;
+    float    omega_y;
+    float    omega_z;
+    float    target_vx;
     float    target_vz;
-    float    target_roll_rate;
-    float    target_pitch_rate;
-    float    target_yaw_rate;
-    float    voltage;
 };
 
-void Copter::Log_Write_LQR_X0()
+void Copter::Log_Write_Input()
 {
-    struct log_LQR_X0 pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_LQR_X0_MSG),
-        time_us             : AP_HAL::micros64(),
-        target_z            : X0[2],
-        target_roll         : X0[3],
-        target_pitch        : X0[4],
-        target_yaw          : X0[5],
-        target_vx           : X0[6],
-        target_vy           : X0[7],
-        target_vz           : X0[8],
-        target_roll_rate    : X0[9],
-        target_pitch_rate   : X0[10],
-        target_yaw_rate     : X0[11],
-        voltage             : real_battery
+    struct log_input pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_INPUT_MSG),
+        time_us         : AP_HAL::micros64(),
+        angle_axis_x    : angle_axis[0],
+        angle_axis_y    : angle_axis[1],
+        angle_axis_z    : angle_axis[2],
+        vx              : vel[0],
+        vy              : vel[1],
+        vz              : vel[2],
+        omega_x         : omega[0],
+        omega_y         : omega[1],
+        omega_z         : omega[2],
+        target_vx       : target_vx,
+        target_vz       : target_vz
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -954,10 +919,8 @@ const struct LogStructure Copter::log_structure[] = {
       "THRO",  "QBffffbbbb",  "TimeUS,Stage,Vel,VelZ,Acc,AccEfZ,Throw,AttOk,HgtOk,PosOk" },
     { LOG_PROXIMITY_MSG, sizeof(log_Proximity),
       "PRX",   "QBfffffffffff","TimeUS,Health,D0,D45,D90,D135,D180,D225,D270,D315,DUp,CAn,CDis" },
-    { LOG_LQR_X_MSG, sizeof(log_LQR_X),
-      "LQRX",  "Qffffffffff", "TimeUS,z,roll,pitch,yaw,vx,vy,vz,vroll,vpitc,vyaw"},
-    { LOG_LQR_X0_MSG, sizeof(log_LQR_X0),
-      "LQX0",  "Qfffffffffff", "TimeUS,z0,roll0,pitc0,yaw0,vx0,vy0,vz0,vrol0,vpit0,vyaw0,volt"},
+    { LOG_INPUT_MSG, sizeof(log_input),
+      "INPU",  "Qfffffffffff", "TimeUS,aax,aay,aaz,vx,vy,vz,wx,wy,wz,tvx,tvz"},
 };
 
 #if CLI_ENABLED == ENABLED
