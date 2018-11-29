@@ -56,7 +56,6 @@ private:
     double initial_yaw_sum;
     float initial_yaw, desired_yaw;
     int yaw_count;
-    float int_diff[12];
 };
 
 #endif  // AP_MOTORSHybrid

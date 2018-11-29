@@ -378,6 +378,31 @@ void Copter::Log_Write_Input()
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
+// For NN controller output
+struct PACKED log_output {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float   desired_out_0;
+    float   desired_out_1;
+    float   desired_out_2;
+    float   desired_out_3;
+    float   desired_out_4;
+};
+
+void Copter::Log_Write_Output()
+{
+    struct log_output pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_OUTPUT_MSG),
+        time_us         : AP_HAL::micros64(),
+        desired_out_0   : desired_thrust[0],
+        desired_out_1   : desired_thrust[1],
+        desired_out_2   : desired_thrust[2],
+        desired_out_3   : desired_thrust[3],
+        desired_out_4   : desired_thrust[4]
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
 struct PACKED log_Performance {
     LOG_PACKET_HEADER;
     uint64_t time_us;
@@ -921,6 +946,8 @@ const struct LogStructure Copter::log_structure[] = {
       "PRX",   "QBfffffffffff","TimeUS,Health,D0,D45,D90,D135,D180,D225,D270,D315,DUp,CAn,CDis" },
     { LOG_INPUT_MSG, sizeof(log_input),
       "INPU",  "Qfffffffffff", "TimeUS,aax,aay,aaz,vx,vy,vz,wx,wy,wz,tvx,tvz"},
+    { LOG_OUTPUT_MSG, sizeof(log_output),
+      "OUTP",  "Qfffff", "TimeUS,T0,T1,T2,T3,T4"},
 };
 
 #if CLI_ENABLED == ENABLED

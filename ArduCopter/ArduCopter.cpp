@@ -420,9 +420,9 @@ void Copter::ten_hz_logging_loop()
         Log_Write_Beacon();
     }
     // Jie Xu
-    // For LQR log
-    Log_Write_LQR_X();
-    Log_Write_LQR_X0();
+    // For Controller
+    Log_Write_Input();
+    Log_Write_Output();
     
 #if FRAME_CONFIG == HELI_FRAME
     Log_Write_Heli();
