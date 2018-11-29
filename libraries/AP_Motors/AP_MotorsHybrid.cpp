@@ -401,7 +401,7 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
 
     // save info to copter
     _copter.angle_axis[0] = input[0]; _copter.angle_axis[1] = input[1]; _copter.angle_axis[2] = input[2];
-    _copter.vel[0] = input[3]; _copter.vel[1] = input[4]; _copter.vel[2] = input[5];
+    _copter.vel_ned[0] = input[3]; _copter.vel_ned[1] = input[4]; _copter.vel_ned[2] = input[5];
     _copter.omega[0] = input[6]; _copter.omega[1] = input[7]; _copter.omega[2] = input[8];
     _copter.target_vx = target_vx; _copter.target_vz = target_vz;
     for (int i = 0;i < NUM_ROTORS;i++) {

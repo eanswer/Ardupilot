@@ -203,7 +203,7 @@ public:
     }
 
     // Controller Infomation
-    float angle_axis[3], vel[3], omega[3], target_vx, target_vz;
+    float angle_axis[3], vel_ned[3], omega[3], target_vx, target_vz;
     float desired_thrust[5];
     float real_battery;
     int   spool_mode;
@@ -799,7 +799,8 @@ private:
     // Jie Xu
     // For NN controller log
     void Log_Write_Input();
-    
+    void Log_Write_Output();
+
 #if FRAME_CONFIG == HELI_FRAME
     void Log_Write_Heli(void);
 #endif
