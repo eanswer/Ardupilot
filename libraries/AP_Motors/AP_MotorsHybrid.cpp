@@ -33,6 +33,14 @@ static float voltage_sum = 0.0f;
 
 extern const AP_HAL::HAL& hal;
 
+void AP_MotorsHybrid::set_radios_switch(uint16_t switch_CH6) {
+    if (switch_CH6 < 1300) {
+        mode = 0;
+    } else {
+        mode = 1;
+    }
+}
+
 void AP_MotorsHybrid::setup_motors(motor_frame_class frame_class, motor_frame_type frame_type) {
     // call parent
     AP_MotorsMatrix::setup_motors(frame_class, frame_type);
@@ -45,6 +53,13 @@ void AP_MotorsHybrid::setup_motors(motor_frame_class frame_class, motor_frame_ty
 }
 
 void AP_MotorsHybrid::output_to_motors() {
+    _copter.policy_mode = mode;
+
+    if (mode == 1) {
+        AP_MotorsMatrix::output_to_motors();
+        return;
+    }
+
     int8_t i;
     int16_t motor_out[AP_MOTORS_MAX_NUM_MOTORS];    // final pwm values sent to the motor
 
@@ -298,6 +313,10 @@ void AP_MotorsHybrid::pi_act(float ob[], float action[]) {
 }
 
 void AP_MotorsHybrid::output_armed_stabilizing() {
+    if (mode == 1) {
+        AP_MotorsMatrix::output_armed_stabilizing();
+        return;
+    } 
     {
         if (!initialization_finished) {
             float now_yaw = _copter.get_yaw();
@@ -325,7 +344,6 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
                 wrap2PI(initial_yaw);
                 desired_yaw = initial_yaw;
                 initialization_finished = true;
-                vx = vy = vz = 0;
             }
         }
     }

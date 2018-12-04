@@ -22,6 +22,8 @@ public:
         : AP_MotorsMatrix(loop_rate, speed_hz), _copter(cop) { }
     virtual ~AP_MotorsHybrid() {}
 
+    void                set_radios_switch(uint16_t switch_CH6);
+
     // setup_motors - configures the motors for rotors.
     virtual void        setup_motors(motor_frame_class frame_class, motor_frame_type frame_type);
     void                output_to_motors();
@@ -48,12 +50,14 @@ private:
     // Points to the Copter class so that we can get all kinds of sensor's data.
     Copter&       _copter;
 
+    // mode
+    uint16_t mode; // 0 for our own policy, 1 for althold mode
+
     // target
     float target_vx, target_vz;
     
     // state
     float roll, pitch, yaw;
-    float vx, vy, vz;
 
     // initial values
     float yaw_0;

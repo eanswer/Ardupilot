@@ -409,6 +409,7 @@ struct PACKED log_var {
     uint64_t time_us;
     float   battery;
     float   yaw_0;
+    uint16_t mode;
 };
 
 void Copter::Log_Write_Var()
@@ -417,7 +418,8 @@ void Copter::Log_Write_Var()
         LOG_PACKET_HEADER_INIT(LOG_VAR_MSG),
         time_us         : AP_HAL::micros64(),
         battery         : real_battery,
-        yaw_0           : yaw_0
+        yaw_0           : yaw_0,
+        mode            : policy_mode
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -968,7 +970,7 @@ const struct LogStructure Copter::log_structure[] = {
     { LOG_OUTPUT_MSG, sizeof(log_output),
       "OUTP",  "Qfffff", "TimeUS,T0,T1,T2,T3,T4"},
     { LOG_VAR_MSG, sizeof(log_var),
-      "VAR",   "Qff", "TimeUS,Volt,Yaw0"},
+      "VAR",   "QffQ", "TimeUS,Volt,Yaw0,mode"},
 };
 
 #if CLI_ENABLED == ENABLED

@@ -302,6 +302,11 @@ void Copter::fast_loop()
     }
 }
 
+// Jie Xu
+void Copter::send_switch_info_to_motor() {
+    motors->set_radios_switch(RC_Channels::rc_channel(CH_6)->get_radio_in());
+}
+
 // rc_loops - reads user input from transmitter/receiver
 // called at 100hz
 void Copter::rc_loop()
@@ -310,6 +315,9 @@ void Copter::rc_loop()
     // -----------------------------------------
     read_radio();
     read_control_switch();
+
+    // Jie Xu
+    send_switch_info_to_motor();
 }
 
 // throttle_loop - should be run at 50 hz

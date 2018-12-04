@@ -212,6 +212,7 @@ public:
     float angle_axis[3], rpy[3], vel_ned[3], omega[3], target_vx, target_vz;
     float desired_thrust[5];
     float real_battery, yaw_0;
+    uint16_t policy_mode;
     int   spool_mode;
     int16_t thr_ctrl_in;
 
@@ -707,6 +708,9 @@ private:
     static const AP_Scheduler::Task scheduler_tasks[];
     static const AP_Param::Info var_info[];
     static const struct LogStructure log_structure[];
+
+    // Jie Xu
+    void send_switch_info_to_motor();
 
     void compass_accumulate(void);
     void compass_cal_update(void);
