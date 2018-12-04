@@ -25,12 +25,6 @@
 #include "AP_MotorsPolicyDefinition.h"
 #include <cmath>
 
-const float min_vx = 0.0f;
-const float max_vx = 6.0f;
-const float min_vz = -1.0f;
-const float max_vz = 1.0f;
-const float max_pwm = 2000.0f;
-
 // For voltage estimation.
 static int last_frame = 0;
 static int current_frame = 0;
@@ -45,7 +39,7 @@ void AP_MotorsHybrid::setup_motors(motor_frame_class frame_class, motor_frame_ty
 
     // Add at most 6 motors. The roll/pitch/yaw factor does not really matter
     // as we are going to send desired pwm via mavlink.
-    for (int i = 0; i < NUM_ROTORS; ++i) {
+    for (int i = 0; i < AC_SPACE_SIZE; ++i) {
         add_motor_raw(AP_MOTORS_MOT_1 + i, 0.0f, 0.0f, 0.0f, i + 1);
     }
 }
@@ -296,6 +290,10 @@ void AP_MotorsHybrid::pi_act(float ob[], float action[]) {
 
     for (int j = 0;j < AC_SPACE_SIZE;j++) {
         action[j] = last_out[j] + FINAL_BIAS;
+        if (action[j] < 0)
+            action[j] = 0;
+        if (action[j] > FINAL_BIAS * 2.0)
+            action[j] = FINAL_BIAS * 2.0;
     }
 }
 
