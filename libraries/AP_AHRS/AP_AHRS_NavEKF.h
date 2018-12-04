@@ -249,6 +249,7 @@ public:
     // get the index of the current primary gyro sensor
     uint8_t get_primary_gyro_index(void) const override;
 
+    Matrix3f _dcm_matrix;
 private:
     enum EKF_TYPE {EKF_TYPE_NONE=0,
                    EKF_TYPE3=3,
@@ -268,7 +269,7 @@ private:
     bool _ekf2_started;
     bool _ekf3_started;
     bool _force_ekf;
-    Matrix3f _dcm_matrix;
+    // Matrix3f _dcm_matrix;
     Vector3f _dcm_attitude;
     Vector3f _gyro_drift;
     Vector3f _gyro_estimate;

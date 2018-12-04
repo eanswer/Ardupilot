@@ -27,13 +27,18 @@ public:
     void                output_to_motors();
 
 protected:
+    // acquire observation vector
     void                get_observation_vector(float ob[]);
     void                get_state(float state[]);
     void                collect_rpy();
     Matrix3f            get_rotation_matrix();
     void                get_angle_axis(float angle_axis[]);
     void                get_velocity(float vel[]);
+    void                get_velocity_body(float vel[]);
     void                get_angular_velocity(float omega[]);
+
+    // run neural network controller
+    void                pi_act(float ob[], float action[]);
 
     // output - sends commands to the motors
     void                output_armed_stabilizing();
@@ -48,6 +53,7 @@ private:
     
     // state
     float roll, pitch, yaw;
+    float vx, vy, vz;
 
     // initial values
     float yaw_0;

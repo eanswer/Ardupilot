@@ -1,0 +1,22 @@
+// Jie Xu
+#ifndef __AP_MOTORS_POLICY_DEF_H__
+#define __AP_MOTORS_POLICY_DEF_H__
+
+const int STATE_SIZE = 9;
+const int OB_SPACE_SIZE = 11;
+const int AC_SPACE_SIZE = 4;
+const int NUM_HIDDEN_LAYER = 2;
+const int HIDDEN_LAYER_SIZE = 64;
+const float FINAL_BIAS = 3.5;
+
+int W0[OB_SPACE_SIZE][HIDDEN_LAYER_SIZE];
+int W_hidden[NUM_HIDDEN_LAYER - 1][HIDDEN_LAYER_SIZE][HIDDEN_LAYER_SIZE];
+int W1[HIDDEN_LAYER_SIZE][AC_SPACE_SIZE];
+int b0[HIDDEN_LAYER_SIZE];
+int b_hidden[NUM_HIDDEN_LAYER - 1][HIDDEN_LAYER_SIZE];
+int b1[AC_SPACE_SIZE];
+
+float ob_mean[OB_SPACE_SIZE];
+float ob_std[OB_SPACE_SIZE];
+
+#endif

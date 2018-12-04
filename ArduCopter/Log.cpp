@@ -403,6 +403,25 @@ void Copter::Log_Write_Output()
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
+// For NN controller variables
+struct PACKED log_var {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float   battery;
+    float   yaw_0;
+};
+
+void Copter::Log_Write_Var()
+{
+    struct log_var pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_VAR_MSG),
+        time_us         : AP_HAL::micros64(),
+        battery         : real_battery,
+        yaw_0           : yaw_0
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
 struct PACKED log_Performance {
     LOG_PACKET_HEADER;
     uint64_t time_us;
@@ -945,9 +964,11 @@ const struct LogStructure Copter::log_structure[] = {
     { LOG_PROXIMITY_MSG, sizeof(log_Proximity),
       "PRX",   "QBfffffffffff","TimeUS,Health,D0,D45,D90,D135,D180,D225,D270,D315,DUp,CAn,CDis" },
     { LOG_INPUT_MSG, sizeof(log_input),
-      "INPU",  "Qfffffffffff", "TimeUS,aax,aay,aaz,vx,vy,vz,wx,wy,wz,tvx,tvz"},
+      "INPU",  "Qfffffffffff", "TimeUS,roll,pitch,yaw,vx,vy,vz,wx,wy,wz,tvx,tvz"},
     { LOG_OUTPUT_MSG, sizeof(log_output),
       "OUTP",  "Qfffff", "TimeUS,T0,T1,T2,T3,T4"},
+    { LOG_VAR_MSG, sizeof(log_var),
+      "VAR",   "Qff", "TimeUS,Volt,Yaw0"},
 };
 
 #if CLI_ENABLED == ENABLED

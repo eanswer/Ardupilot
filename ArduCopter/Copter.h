@@ -188,6 +188,12 @@ public:
     float get_yaw() const {
         return ahrs.yaw;
     }
+    float get_cos_yaw() const {
+        return ahrs.cos_yaw();
+    }
+    float get_sin_yaw() const {
+        return ahrs.sin_yaw();
+    }
     Vector3f get_omega_body() const {
         return ahrs.get_gyro();;
     }
@@ -203,11 +209,18 @@ public:
     }
 
     // Controller Infomation
-    float angle_axis[3], vel_ned[3], omega[3], target_vx, target_vz;
+    float angle_axis[3], rpy[3], vel_ned[3], omega[3], target_vx, target_vz;
     float desired_thrust[5];
-    float real_battery;
+    float real_battery, yaw_0;
     int   spool_mode;
     int16_t thr_ctrl_in;
+
+    // ins
+    AP_InertialSensor ins;
+    // Inertial Navigation EKF
+    NavEKF2 EKF2{&ahrs, barometer, rangefinder};
+    NavEKF3 EKF3{&ahrs, barometer, rangefinder};
+    AP_AHRS_NavEKF ahrs{ins, barometer, gps, rangefinder, EKF2, EKF3, AP_AHRS_NavEKF::FLAG_ALWAYS_USE_EKF};
 
 private:
     // key aircraft parameters passed to multiple libraries
@@ -249,7 +262,7 @@ private:
 
     AP_Baro barometer;
     Compass compass;
-    AP_InertialSensor ins;
+    // AP_InertialSensor ins;
 
     RangeFinder rangefinder {serial_manager, ROTATION_PITCH_270};
     struct {
@@ -264,9 +277,9 @@ private:
     AP_RPM rpm_sensor;
 
     // Inertial Navigation EKF
-    NavEKF2 EKF2{&ahrs, barometer, rangefinder};
-    NavEKF3 EKF3{&ahrs, barometer, rangefinder};
-    AP_AHRS_NavEKF ahrs{ins, barometer, gps, rangefinder, EKF2, EKF3, AP_AHRS_NavEKF::FLAG_ALWAYS_USE_EKF};
+    // NavEKF2 EKF2{&ahrs, barometer, rangefinder};
+    // NavEKF3 EKF3{&ahrs, barometer, rangefinder};
+    // AP_AHRS_NavEKF ahrs{ins, barometer, gps, rangefinder, EKF2, EKF3, AP_AHRS_NavEKF::FLAG_ALWAYS_USE_EKF};
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
     SITL::SITL sitl;
@@ -800,6 +813,7 @@ private:
     // For NN controller log
     void Log_Write_Input();
     void Log_Write_Output();
+    void Log_Write_Var();
 
 #if FRAME_CONFIG == HELI_FRAME
     void Log_Write_Heli(void);

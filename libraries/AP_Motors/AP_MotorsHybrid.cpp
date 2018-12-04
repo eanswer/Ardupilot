@@ -21,23 +21,9 @@
  #include "../../ArduCopter/Copter.h"
 #include <AP_HAL/AP_HAL.h>
 #include "AP_MotorsHybrid.h"
-
-// The meaning of each column
-#define ANGLE_AXIS_X        0
-#define ANGLE_AXIS_Y        1
-#define ANGLE_AXIS_Z        2
-#define V_X                 3
-#define V_Y                 4
-#define V_Z                 5
-#define OMEGA_X             6
-#define OMEGA_Y             7
-#define OMEGA_Z             8
-#define TARGET_VX           9
-#define TARGET_VY           10
-
-#define NUM_STATE           9
-#define NUM_INPUT           11
-#define NUM_ROTORS          4
+#include "AP_MotorsHybridHelper.h"
+#include "AP_MotorsPolicyDefinition.h"
+#include <cmath>
 
 const float min_vx = 0.0f;
 const float max_vx = 6.0f;
@@ -52,74 +38,6 @@ static float average_voltage = 0.0f;
 static float voltage_sum = 0.0f;
 
 extern const AP_HAL::HAL& hal;
-
-// Definitions of helper functions.
-float remap(const float in_value, const float in_low, const float in_high,
-        const float out_low, const float out_high) {
-    if (fabs(in_low - in_high) < 1e-5) return (out_low + out_high) / 2.0f;
-    return (in_value - in_low) / (in_high - in_low) * (out_high - out_low) + out_low;
-}
-
-float clamp(const float in_value, const float in_low, const float in_high) {
-    return (in_value < in_low ? in_low : (in_value > in_high ? in_high : in_value));
-}
-
-float deg2rad(const float x) {
-    return x / 180.0 * PI;
-}
-
-float wrap180(const float x) {
-    return x < -180.0f ? (x + 360.0f) : (x > 180.0f ? (x - 360.0f) : x);
-}
-
-void wrap2PI(float &x) {
-    for (;x >= PI;) 
-        x -= 2.0 * PI;
-    for (;x < -PI;)
-        x += 2.0 * PI;
-}
-
-float angle_diff(const float a, const float b) {
-    float x = a - b;
-    wrap2PI(x);
-    return x;
-}
-
-float thrust2pwm_dji_set(const float thrust, const float voltage) {
-    // Output from matlab:
-    /*
-     Linear model Poly21:
-     a(x,y) = p00 + p10*x + p01*y + p20*x^2 + p11*x*y
-       where x is normalized by mean 1525 and std 231.1462
-       and where y is normalized by mean 11.7894 and std 0.3300
-     Coefficients (with 95% confidence bounds):
-       p00 =       2.939  (2.912, 2.966)
-       p10 =       2.422  (2.401, 2.442)
-       p01 =      0.1464  (0.1259, 0.1669)
-       p20 =      0.3989  (0.3762, 0.4215)
-       p11 =      0.1119  (0.0913, 0.1325)
-    */
-    // Reject unreasonable data.
-    if (thrust <= 0.0f || voltage <= 7.5f || voltage >= 13.0f) return 1000.0f;
-    const float mean_throttle = 1525.0f;
-    const float std_throttle = 231.1462f;
-    const float mean_voltage = 11.7894f;
-    const float std_voltage = 0.3300f;
-    const float p00 = 2.939f;
-    const float p10 = 2.422f;
-    const float p01 = 0.1464f;
-    const float p20 = 0.3989f;
-    const float p11 = 0.1119f;
-    const float y = (voltage - mean_voltage) / std_voltage;
-    const float a = p20;
-    const float b = p11 * y + p10;
-    const float c = p01 * y + p00 - thrust;
-    const float delta = b * b - 4 * a * c;
-    if (delta < 0.0f) return 1000.0f;
-    const float x = (-b + sqrtf(delta)) / 2.0f / a;
-    const float throttle = x * std_throttle + mean_throttle;
-    return clamp(throttle, 1000.0f, max_pwm);
-}
 
 void AP_MotorsHybrid::setup_motors(motor_frame_class frame_class, motor_frame_type frame_type) {
     // call parent
@@ -153,7 +71,7 @@ void AP_MotorsHybrid::output_to_motors() {
         case SHUT_DOWN: {
             // sends minimum values out to the motors
             // set motor output based on thrust requests
-            for (i=0; i<NUM_ROTORS; i++) {
+            for (i=0; i<AC_SPACE_SIZE; i++) {
                 if (_disarm_disable_pwm && _disarm_safety_timer == 0 && !armed()) {
                     motor_out[i] = 0;
                 } else {
@@ -176,10 +94,10 @@ void AP_MotorsHybrid::output_to_motors() {
         case SPOOL_DOWN:
             // set motor output based on thrust requests
             if (!initialization_finished) {
-                for (i = 0;i < NUM_ROTORS;i++)
+                for (i = 0;i < AC_SPACE_SIZE;i++)
                     motor_out[i] = 1100;
             } else {
-                for (i=0; i<NUM_ROTORS; i++) {
+                for (i=0; i<AC_SPACE_SIZE; i++) {
                     float pwm = thrust2pwm_dji_set(_thrust_rpyt_out[i], average_voltage);
                     pwm = clamp(pwm, (float)1100.0f, (float)1900.0f);
                     motor_out[i] = (int16_t)pwm;
@@ -189,10 +107,10 @@ void AP_MotorsHybrid::output_to_motors() {
     }
 
     // send output to each motor
-    for (i=0; i<NUM_ROTORS; i++) {
+    for (i=0; i<AC_SPACE_SIZE; i++) {
         rc_write(i, motor_out[i]);
     }
-    for (i = 0;i < NUM_ROTORS; i++) {
+    for (i = 0;i < AC_SPACE_SIZE; i++) {
         _copter.desired_thrust[i] = _thrust_rpyt_out[i];
     }
     _copter.real_battery = average_voltage;
@@ -200,28 +118,29 @@ void AP_MotorsHybrid::output_to_motors() {
 }
 
 void AP_MotorsHybrid::get_observation_vector(float ob[]) {
-    float state[NUM_STATE];
+    float state[STATE_SIZE];
     get_state(state);
-    for (int i = 0;i < NUM_STATE;i++) {
+    for (int i = 0;i < STATE_SIZE;i++) {
         ob[i] = state[i];
     }
-    ob[NUM_STATE] = target_vx;
-    ob[NUM_STATE + 1] = target_vz;
+    ob[STATE_SIZE] = target_vx;
+    ob[STATE_SIZE + 1] = target_vz;
 }
 
 void AP_MotorsHybrid::get_state(float state[]) {
     collect_rpy();
 
-    float angle_axis[3];
-    get_angle_axis(angle_axis);
-
+    // float angle_axis[3];
+    // get_angle_axis(angle_axis);
     float vel[3];
-    get_velocity(vel);
+    // get_velocity(vel);
+    get_velocity_body(vel);
 
     float omega[3];
     get_angular_velocity(omega);
 
-    state[0] = angle_axis[0]; state[1] = angle_axis[1]; state[2] = angle_axis[2];
+    // state[0] = angle_axis[0]; state[1] = angle_axis[1]; state[2] = angle_axis[2];
+    state[0] = roll; state[1] = pitch; state[2] = yaw;
     state[3] = vel[0]; state[4] = vel[1]; state[5] = vel[2];
     state[6] = omega[0]; state[7] = omega[1]; state[8] = omega[2];
 }
@@ -230,6 +149,7 @@ void AP_MotorsHybrid::collect_rpy() {
     roll = _copter.get_roll();
     pitch = _copter.get_pitch();
     yaw = _copter.get_yaw() - yaw_0;
+    wrap2PI(yaw);
 }
 
 Matrix3f AP_MotorsHybrid::get_rotation_matrix() {    
@@ -295,6 +215,14 @@ void AP_MotorsHybrid::get_velocity(float vel[]) {
     vel[2] = velocity_ef[2];
 }
 
+// local offset NED frame
+void AP_MotorsHybrid::get_velocity_body(float vel[]) {
+    const Vector3f velocity_ef = _copter.get_ned_velocity();
+    vel[0] = velocity_ef[0] * _copter.get_cos_yaw() + velocity_ef[1] * _copter.get_sin_yaw();
+    vel[1] = - velocity_ef[0] * _copter.get_sin_yaw() + velocity_ef[1] * _copter.get_cos_yaw();
+    vel[2] = velocity_ef[2];
+}
+
 /*
 void AP_MotorsHybrid::get_angular_velocity(float omega[]) {
     // first convert roll_rate, pitch_rate, yaw_rate into body-frame angular velocity p_b, q_b, r_b
@@ -323,6 +251,54 @@ void AP_MotorsHybrid::get_angular_velocity(float omega[]) {
     omega[2] = _omega.z;
 }
 
+void AP_MotorsHybrid::pi_act(float ob[], float action[]) {
+    // run normalization
+    for (int i = 0;i < OB_SPACE_SIZE;i++) {
+        ob[i] = (ob[i] - ob_mean[i]) / ob_std[i];
+    }
+
+    // run mlp policy
+    int max_layer_size = max(OB_SPACE_SIZE, max(AC_SPACE_SIZE, HIDDEN_LAYER_SIZE));
+    float last_out[max_layer_size];
+    float tmp[max_layer_size];
+
+    for (int j = 0;j < HIDDEN_LAYER_SIZE;j++) {
+        tmp[j] = 0;
+        for (int i = 0;i < OB_SPACE_SIZE;i++) {
+            tmp[j] += ob[i] * W0[i][j];
+        }
+    }
+    for (int j = 0;j < HIDDEN_LAYER_SIZE;j++) {
+        last_out[j] = tanh(tmp[j] + b0[j]);
+    }
+
+    for (int i = 0;i < NUM_HIDDEN_LAYER - 1;i++) {
+        for (int j = 0;j < HIDDEN_LAYER_SIZE;j++) {
+            tmp[j] = 0;
+            for (int k = 0;k < HIDDEN_LAYER_SIZE;k++) {
+                tmp[j] += last_out[k] * W_hidden[i][k][j];
+            }
+        }
+        for (int j = 0;j < HIDDEN_LAYER_SIZE;j++) {
+            last_out[j] = tanh(tmp[j] + b_hidden[i][j]);
+        }
+    }
+
+    for (int j = 0;j < AC_SPACE_SIZE;j++) {
+        tmp[j] = 0;
+        for (int i = 0;i < HIDDEN_LAYER_SIZE;i ++) {
+            tmp[j] += last_out[i] * W1[i][j];
+        }
+    }
+    for (int j = 0;j < AC_SPACE_SIZE;j++) {
+        last_out[j] = tmp[j] + b1[j];
+    }
+
+    for (int j = 0;j < AC_SPACE_SIZE;j++) {
+        action[j] = last_out[j] + FINAL_BIAS;
+    }
+}
+
 void AP_MotorsHybrid::output_armed_stabilizing() {
     {
         if (!initialization_finished) {
@@ -346,11 +322,12 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
                     yaw_count ++;
                 }
             }
-            if (yaw_count == 400) {
+            if (yaw_count == 4000) {
                 yaw_0 = (float)(initial_yaw_sum / yaw_count);
                 wrap2PI(initial_yaw);
                 desired_yaw = initial_yaw;
                 initialization_finished = true;
+                vx = vy = vz = 0;
             }
         }
     }
@@ -391,22 +368,26 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
     } 
 
     // get NN input
-    float input[NUM_INPUT];
-    get_observation_vector(input);
+    float observation[OB_SPACE_SIZE];
+    get_observation_vector(observation);
+    float action[AC_SPACE_SIZE];
+    pi_act(observation, action);
 
     // Compute the desired thrust.
-    for (int i = 0;i < NUM_ROTORS;i ++) {
-        _thrust_rpyt_out[i] = 0;
+    for (int i = 0;i < AC_SPACE_SIZE;i ++) {
+        _thrust_rpyt_out[i] = action[i];
     }
 
     // save info to copter
-    _copter.angle_axis[0] = input[0]; _copter.angle_axis[1] = input[1]; _copter.angle_axis[2] = input[2];
-    _copter.vel_ned[0] = input[3]; _copter.vel_ned[1] = input[4]; _copter.vel_ned[2] = input[5];
-    _copter.omega[0] = input[6]; _copter.omega[1] = input[7]; _copter.omega[2] = input[8];
+    _copter.angle_axis[0] = observation[0]; _copter.angle_axis[1] = observation[1]; _copter.angle_axis[2] = observation[2];
+    _copter.rpy[0] = roll; _copter.rpy[1] = pitch; _copter.rpy[2] = yaw;
+    _copter.vel_ned[0] = observation[3]; _copter.vel_ned[1] = observation[4]; _copter.vel_ned[2] = observation[5];
+    _copter.omega[0] = observation[6]; _copter.omega[1] = observation[7]; _copter.omega[2] = observation[8];
     _copter.target_vx = target_vx; _copter.target_vz = target_vz;
-    for (int i = 0;i < NUM_ROTORS;i++) {
+    for (int i = 0;i < AC_SPACE_SIZE;i++) {
         _copter.desired_thrust[i] = _thrust_rpyt_out[i];
     }
+    _copter.yaw_0 = yaw_0;
     _copter.thr_ctrl_in = (int16_t)thr_ctrl;
 }
 

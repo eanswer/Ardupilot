@@ -423,6 +423,7 @@ void Copter::ten_hz_logging_loop()
     // For Controller
     Log_Write_Input();
     Log_Write_Output();
+    Log_Write_Var();
     
 #if FRAME_CONFIG == HELI_FRAME
     Log_Write_Heli();
