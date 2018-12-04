@@ -387,11 +387,11 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
     float observation[OB_SPACE_SIZE];
     get_observation_vector(observation);
     float action[AC_SPACE_SIZE];
-    pi_act(observation, action);
+    // pi_act(observation, action);
 
     // Compute the desired thrust.
     for (int i = 0;i < AC_SPACE_SIZE;i ++) {
-        _thrust_rpyt_out[i] = action[i];
+        _thrust_rpyt_out[i] = 0;//action[i];
     }
 
     // save info to copter

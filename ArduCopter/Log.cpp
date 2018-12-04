@@ -970,7 +970,7 @@ const struct LogStructure Copter::log_structure[] = {
     { LOG_OUTPUT_MSG, sizeof(log_output),
       "OUTP",  "Qfffff", "TimeUS,T0,T1,T2,T3,T4"},
     { LOG_VAR_MSG, sizeof(log_var),
-      "VAR",   "QffQ", "TimeUS,Volt,Yaw0,mode"},
+      "VAR",   "QffH", "TimeUS,Volt,Yaw0,mode"},
 };
 
 #if CLI_ENABLED == ENABLED
