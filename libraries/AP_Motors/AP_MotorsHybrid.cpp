@@ -23,7 +23,6 @@
 #include "AP_MotorsHybrid.h"
 #include "AP_MotorsHybridHelper.h"
 #include "AP_MotorsPolicyDefinition.h"
-#include <cmath>
 
 // For voltage estimation.
 static int last_frame = 0;
@@ -267,42 +266,42 @@ void AP_MotorsHybrid::pi_act(float ob[], float action[]) {
     }
 
     // run mlp policy
-    int max_layer_size = max(OB_SPACE_SIZE, max(AC_SPACE_SIZE, HIDDEN_LAYER_SIZE));
-    float last_out[max_layer_size];
-    float tmp[max_layer_size];
+    
+    float last_out[HIDDEN_LAYER_SIZE];
+    float tmp[HIDDEN_LAYER_SIZE];
 
     for (int j = 0;j < HIDDEN_LAYER_SIZE;j++) {
-        tmp[j] = 0;
+        tmp[j] = b0[j];
         for (int i = 0;i < OB_SPACE_SIZE;i++) {
             tmp[j] += ob[i] * W0[i][j];
         }
     }
     for (int j = 0;j < HIDDEN_LAYER_SIZE;j++) {
-        last_out[j] = tanh(tmp[j] + b0[j]);
+        last_out[j] = tanhf(tmp[j]);
     }
-
+    
     for (int i = 0;i < NUM_HIDDEN_LAYER - 1;i++) {
         for (int j = 0;j < HIDDEN_LAYER_SIZE;j++) {
-            tmp[j] = 0;
+            tmp[j] = b_hidden[i][j];
             for (int k = 0;k < HIDDEN_LAYER_SIZE;k++) {
                 tmp[j] += last_out[k] * W_hidden[i][k][j];
             }
         }
         for (int j = 0;j < HIDDEN_LAYER_SIZE;j++) {
-            last_out[j] = tanh(tmp[j] + b_hidden[i][j]);
+            last_out[j] = tanhf(tmp[j]);
         }
     }
 
     for (int j = 0;j < AC_SPACE_SIZE;j++) {
-        tmp[j] = 0;
+        tmp[j] = b1[j];
         for (int i = 0;i < HIDDEN_LAYER_SIZE;i ++) {
             tmp[j] += last_out[i] * W1[i][j];
         }
     }
     for (int j = 0;j < AC_SPACE_SIZE;j++) {
-        last_out[j] = tmp[j] + b1[j];
+        last_out[j] = tmp[j];
     }
-
+    
     for (int j = 0;j < AC_SPACE_SIZE;j++) {
         action[j] = last_out[j] + FINAL_BIAS;
         if (action[j] < 0)
@@ -377,21 +376,21 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
         target_vz = 0;
     }
     target_vx = 0.0f;
-    if (pitch_ctrl < 500.0f) {
+    if (pitch_ctrl > -500.0f) {
         target_vx = 0.0f;
     } else {
-        target_vx = remap(pitch_ctrl, 500.0f, 4500.0f, 0.0f, max_vx);
+        target_vx = remap(pitch_ctrl, -500.0f, -4500.0f, 0.0f, max_vx);
     } 
 
     // get NN input
     float observation[OB_SPACE_SIZE];
     get_observation_vector(observation);
     float action[AC_SPACE_SIZE];
-    // pi_act(observation, action);
+    pi_act(observation, action);
 
     // Compute the desired thrust.
     for (int i = 0;i < AC_SPACE_SIZE;i ++) {
-        _thrust_rpyt_out[i] = 0;//action[i];
+        _thrust_rpyt_out[i] = action[i];
     }
 
     // save info to copter
