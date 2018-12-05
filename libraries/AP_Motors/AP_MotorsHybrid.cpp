@@ -46,9 +46,9 @@ void AP_MotorsHybrid::setup_motors(motor_frame_class frame_class, motor_frame_ty
 
     // Add at most 6 motors. The roll/pitch/yaw factor does not really matter
     // as we are going to send desired pwm via mavlink.
-    for (int i = 0; i < AC_SPACE_SIZE; ++i) {
-        add_motor_raw(AP_MOTORS_MOT_1 + i, 0.0f, 0.0f, 0.0f, i + 1);
-    }
+    // for (int i = 0; i < AC_SPACE_SIZE; ++i) {
+    //     add_motor_raw(AP_MOTORS_MOT_1 + i, 0.0f, 0.0f, 0.0f, i + 1);
+    // }
 }
 
 void AP_MotorsHybrid::output_to_motors() {
@@ -261,8 +261,9 @@ void AP_MotorsHybrid::get_angular_velocity(float omega[]) {
 
 void AP_MotorsHybrid::pi_act(float ob[], float action[]) {
     // run normalization
+    float ob_normalized[OB_SPACE_SIZE];
     for (int i = 0;i < OB_SPACE_SIZE;i++) {
-        ob[i] = (ob[i] - ob_mean[i]) / ob_std[i];
+        ob_normalized[i] = (ob[i] - ob_mean[i]) / ob_std[i];
     }
 
     // run mlp policy
@@ -273,7 +274,7 @@ void AP_MotorsHybrid::pi_act(float ob[], float action[]) {
     for (int j = 0;j < HIDDEN_LAYER_SIZE;j++) {
         tmp[j] = b0[j];
         for (int i = 0;i < OB_SPACE_SIZE;i++) {
-            tmp[j] += ob[i] * W0[i][j];
+            tmp[j] += ob_normalized[i] * W0[i][j];
         }
     }
     for (int j = 0;j < HIDDEN_LAYER_SIZE;j++) {
@@ -394,8 +395,8 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
     }
 
     // save info to copter
-    _copter.angle_axis[0] = observation[0]; _copter.angle_axis[1] = observation[1]; _copter.angle_axis[2] = observation[2];
-    _copter.rpy[0] = roll; _copter.rpy[1] = pitch; _copter.rpy[2] = yaw;
+    // _copter.rpy[0] = roll; _copter.rpy[1] = pitch; _copter.rpy[2] = yaw;
+    _copter.rpy[0] = observation[0]; _copter.rpy[1] = observation[1]; _copter.rpy[2] = observation[2];
     _copter.vel_ned[0] = observation[3]; _copter.vel_ned[1] = observation[4]; _copter.vel_ned[2] = observation[5];
     _copter.omega[0] = observation[6]; _copter.omega[1] = observation[7]; _copter.omega[2] = observation[8];
     _copter.target_vx = target_vx; _copter.target_vz = target_vz;

@@ -345,9 +345,9 @@ void Copter::Log_Write_Control_Tuning()
 struct PACKED log_input {
     LOG_PACKET_HEADER;
     uint64_t time_us;
-    float    angle_axis_x;
-    float    angle_axis_y;
-    float    angle_axis_z;
+    float    roll;
+    float    pitch;
+    float    yaw;
     float    vx;
     float    vy;
     float    vz;
@@ -363,9 +363,9 @@ void Copter::Log_Write_Input()
     struct log_input pkt = {
         LOG_PACKET_HEADER_INIT(LOG_INPUT_MSG),
         time_us         : AP_HAL::micros64(),
-        angle_axis_x    : angle_axis[0],
-        angle_axis_y    : angle_axis[1],
-        angle_axis_z    : angle_axis[2],
+        roll            : rpy[0],
+        pitch           : rpy[1],
+        yaw             : rpy[2],
         vx              : vel_ned[0],
         vy              : vel_ned[1],
         vz              : vel_ned[2],
@@ -410,6 +410,7 @@ struct PACKED log_var {
     float   battery;
     float   yaw_0;
     uint16_t mode;
+    int     spool_mode;
 };
 
 void Copter::Log_Write_Var()
@@ -419,7 +420,8 @@ void Copter::Log_Write_Var()
         time_us         : AP_HAL::micros64(),
         battery         : real_battery,
         yaw_0           : yaw_0,
-        mode            : policy_mode
+        mode            : policy_mode,
+        spool_mode      : spool_mode
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -970,7 +972,7 @@ const struct LogStructure Copter::log_structure[] = {
     { LOG_OUTPUT_MSG, sizeof(log_output),
       "OUTP",  "Qfffff", "TimeUS,T0,T1,T2,T3,T4"},
     { LOG_VAR_MSG, sizeof(log_var),
-      "VAR",   "QffH", "TimeUS,Volt,Yaw0,mode"},
+      "VAR",   "QffHi", "TimeUS,Volt,Yaw0,mode,spool"},
 };
 
 #if CLI_ENABLED == ENABLED

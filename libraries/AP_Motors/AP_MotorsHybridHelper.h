@@ -5,8 +5,8 @@
 
 const float min_vx = 0.0f;
 const float max_vx = 6.0f;
-const float min_vz = -1.0f;
-const float max_vz = 1.0f;
+const float min_vz = 1.0f;
+const float max_vz = -1.0f;
 const float max_pwm = 2000.0f;
 
 // Definitions of helper functions.
