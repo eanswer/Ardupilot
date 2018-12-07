@@ -64,7 +64,6 @@ private:
 
     bool initialization_finished;
     double initial_yaw_sum;
-    float initial_yaw, desired_yaw;
     int yaw_count;
 };
 

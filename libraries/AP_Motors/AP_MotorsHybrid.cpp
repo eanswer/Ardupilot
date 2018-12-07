@@ -52,16 +52,6 @@ void AP_MotorsHybrid::setup_motors(motor_frame_class frame_class, motor_frame_ty
 }
 
 void AP_MotorsHybrid::output_to_motors() {
-    _copter.policy_mode = mode;
-
-    if (mode == 1) {
-        AP_MotorsMatrix::output_to_motors();
-        return;
-    }
-
-    int8_t i;
-    int16_t motor_out[AP_MOTORS_MAX_NUM_MOTORS];    // final pwm values sent to the motor
-
     // Increment current frame.
     ++current_frame;
     // Compute the mean voltage since last update. We take the mean voltage during the last
@@ -74,6 +64,17 @@ void AP_MotorsHybrid::output_to_motors() {
         voltage_sum += _copter.get_battery_voltage();
     }
     // estimate voltage by _batt_voltage_filt.get() * _batt_voltage_max
+
+    _copter.real_battery = average_voltage;
+    _copter.policy_mode = mode;
+
+    if (mode == 1) {
+        AP_MotorsMatrix::output_to_motors();
+        return;
+    }
+
+    int8_t i;
+    int16_t motor_out[AP_MOTORS_MAX_NUM_MOTORS];    // final pwm values sent to the motor
 
     switch (_spool_mode) {
         case SHUT_DOWN: {
@@ -106,7 +107,7 @@ void AP_MotorsHybrid::output_to_motors() {
                     motor_out[i] = 1100;
             } else {
                 for (i=0; i<AC_SPACE_SIZE; i++) {
-                    float pwm = thrust2pwm_dji_set(_thrust_rpyt_out[i], average_voltage);
+                    float pwm = thrust2pwm_castle_dji_set(_thrust_rpyt_out[i], average_voltage);
                     pwm = clamp(pwm, (float)1100.0f, (float)1900.0f);
                     motor_out[i] = (int16_t)pwm;
                 }
@@ -121,7 +122,7 @@ void AP_MotorsHybrid::output_to_motors() {
     for (i = 0;i < AC_SPACE_SIZE; i++) {
         _copter.desired_thrust[i] = _thrust_rpyt_out[i];
     }
-    _copter.real_battery = average_voltage;
+    
     _copter.spool_mode = (int)_spool_mode;
 }
 
@@ -223,7 +224,7 @@ void AP_MotorsHybrid::get_velocity(float vel[]) {
     vel[2] = velocity_ef[2];
 }
 
-// local offset NED frame
+// local NED frame
 void AP_MotorsHybrid::get_velocity_body(float vel[]) {
     const Vector3f velocity_ef = _copter.get_ned_velocity();
     vel[0] = velocity_ef[0] * _copter.get_cos_yaw() + velocity_ef[1] * _copter.get_sin_yaw();
@@ -325,7 +326,7 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
                 yaw_count = 1;
             } else {
                 float estimated_initial_yaw = (float)(initial_yaw_sum / yaw_count);
-                if (angle_diff(estimated_initial_yaw, now_yaw) > deg2rad(30)) {
+                if (fabs(angle_diff(estimated_initial_yaw, now_yaw)) > deg2rad(30)) {
                     initial_yaw_sum = now_yaw;
                     yaw_count = 1;
                 } else {
@@ -341,8 +342,6 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
             }
             if (yaw_count == 4000) {
                 yaw_0 = (float)(initial_yaw_sum / yaw_count);
-                wrap2PI(initial_yaw);
-                desired_yaw = initial_yaw;
                 initialization_finished = true;
             }
         }
