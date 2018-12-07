@@ -411,6 +411,7 @@ struct PACKED log_var {
     float   yaw_0;
     uint16_t mode;
     int     spool_mode;
+    float   rotation_matrix_diff;
 };
 
 void Copter::Log_Write_Var()
@@ -421,7 +422,8 @@ void Copter::Log_Write_Var()
         battery         : real_battery,
         yaw_0           : yaw_0,
         mode            : policy_mode,
-        spool_mode      : spool_mode
+        spool_mode      : spool_mode,
+        rotation_matrix_diff : rotation_matrix_diff
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -972,7 +974,7 @@ const struct LogStructure Copter::log_structure[] = {
     { LOG_OUTPUT_MSG, sizeof(log_output),
       "OUTP",  "Qfffff", "TimeUS,T0,T1,T2,T3,T4"},
     { LOG_VAR_MSG, sizeof(log_var),
-      "VAR",   "QffHi", "TimeUS,Volt,Yaw0,mode,spool"},
+      "VAR",   "QffHif", "TimeUS,Volt,Yaw0,mode,spool,rotdiff"},
 };
 
 #if CLI_ENABLED == ENABLED

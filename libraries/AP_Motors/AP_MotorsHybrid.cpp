@@ -162,6 +162,7 @@ void AP_MotorsHybrid::collect_rpy() {
 }
 
 Matrix3f AP_MotorsHybrid::get_rotation_matrix() {    
+    // another option here is: ahrs.get_rotation_body_to_ned()
     Matrix3f R_roll, R_pitch, R_yaw;
     
     R_roll[0][0] = 1; R_roll[0][1] = 0; R_roll[0][2] = 0;
@@ -176,7 +177,16 @@ Matrix3f AP_MotorsHybrid::get_rotation_matrix() {
     R_yaw[1][0] = sin(yaw); R_yaw[1][1] = cos(yaw); R_yaw[1][2] = 0;
     R_yaw[2][0] = 0; R_yaw[2][1] = 0; R_yaw[2][2] = 1;
 
-    return R_yaw * R_pitch * R_roll;
+    Matrix3f rotation_matrix = R_yaw * R_pitch * R_roll;
+    Matrix3f rotation_matrix_from_ahrs = _copter.get_rotation_matrix();
+    float diff = 0;
+    for (int i = 0;i < 3;i++)
+        for (int j = 0;j < 3;j++)
+            diff += (rotation_matrix[i][j] - rotation_matrix_from_ahrs[i][j]) * (rotation_matrix[i][j] - rotation_matrix_from_ahrs[i][j]);
+    
+    _copter.rotation_matrix_diff = diff;
+
+    return rotation_matrix;
 }
 
 void AP_MotorsHybrid::get_angle_axis(float angle_axis[]) {
@@ -268,7 +278,6 @@ void AP_MotorsHybrid::pi_act(float ob[], float action[]) {
     }
 
     // run mlp policy
-    
     float last_out[HIDDEN_LAYER_SIZE];
     float tmp[HIDDEN_LAYER_SIZE];
 

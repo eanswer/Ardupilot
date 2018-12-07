@@ -197,6 +197,10 @@ public:
     Vector3f get_omega_body() const {
         return ahrs.get_gyro();;
     }
+    Matrix3f& get_rotation_matrix() const {
+        return ahrs.get_rotation_body_to_ned();
+    }
+
     // Battery voltage.
     float get_battery_voltage() const {
         return battery.voltage();
@@ -212,6 +216,7 @@ public:
     float angle_axis[3], rpy[3], vel_ned[3], omega[3], target_vx, target_vz;
     float desired_thrust[5];
     float real_battery, yaw_0;
+    float rotation_matrix_diff;
     uint16_t policy_mode;
     int   spool_mode;
     int16_t thr_ctrl_in;
