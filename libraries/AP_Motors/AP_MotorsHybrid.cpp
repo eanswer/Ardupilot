@@ -158,7 +158,6 @@ void AP_MotorsHybrid::collect_rpy() {
     roll = _copter.get_roll();
     pitch = _copter.get_pitch();
     yaw = _copter.get_yaw() - yaw_0;
-    // yaw = _copter.get_yaw();
     wrap2PI(yaw);
 }
 
