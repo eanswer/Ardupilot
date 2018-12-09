@@ -158,6 +158,7 @@ void AP_MotorsHybrid::collect_rpy() {
     roll = _copter.get_roll();
     pitch = _copter.get_pitch();
     yaw = _copter.get_yaw() - yaw_0;
+    // yaw = _copter.get_yaw();
     wrap2PI(yaw);
 }
 
@@ -178,13 +179,14 @@ Matrix3f AP_MotorsHybrid::get_rotation_matrix() {
     R_yaw[2][0] = 0; R_yaw[2][1] = 0; R_yaw[2][2] = 1;
 
     Matrix3f rotation_matrix = R_yaw * R_pitch * R_roll;
-    Matrix3f rotation_matrix_from_ahrs = _copter.get_rotation_matrix();
-    float diff = 0;
-    for (int i = 0;i < 3;i++)
-        for (int j = 0;j < 3;j++)
-            diff += (rotation_matrix[i][j] - rotation_matrix_from_ahrs[i][j]) * (rotation_matrix[i][j] - rotation_matrix_from_ahrs[i][j]);
     
-    _copter.rotation_matrix_diff = diff;
+    // const Matrix3f rotation_matrix_from_ahrs = _copter.get_rotation_matrix();
+    // float diff = 0;
+    // for (int i = 0;i < 3;i++)
+    //     for (int j = 0;j < 3;j++)
+    //         diff += (rotation_matrix[i][j] - rotation_matrix_from_ahrs[i][j]) * (rotation_matrix[i][j] - rotation_matrix_from_ahrs[i][j]);
+    
+    // _copter.rotation_matrix_diff = diff;
 
     return rotation_matrix;
 }

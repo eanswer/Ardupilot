@@ -197,7 +197,7 @@ public:
     Vector3f get_omega_body() const {
         return ahrs.get_gyro();;
     }
-    Matrix3f& get_rotation_matrix() const {
+    const Matrix3f& get_rotation_matrix() const {
         return ahrs.get_rotation_body_to_ned();
     }
 
