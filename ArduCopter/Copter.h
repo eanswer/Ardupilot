@@ -217,6 +217,7 @@ public:
     float desired_thrust[5];
     float real_battery, yaw_0;
     float rotation_matrix_diff;
+    float target_roll_diff, target_yaw_diff;
     uint16_t policy_mode;
     int   spool_mode;
     int16_t thr_ctrl_in;

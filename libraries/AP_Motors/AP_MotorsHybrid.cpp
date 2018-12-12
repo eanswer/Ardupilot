@@ -377,6 +377,9 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
     // calculate the desired vx and vz
     const float thr_ctrl = (float)_copter.get_channel_throttle_control_in();
     const float pitch_ctrl = (float)_copter.get_channel_pitch_control_in();
+    const float roll_ctrl = (float)_copter.get_channel_roll_control_in();
+    const float yaw_ctrl = (float)_copter.get_channel_yaw_control_in();
+
     target_vz = 0.0f;
     if (thr_ctrl < 400.0f) {
         target_vz = remap(thr_ctrl, 0.0f, 400.0f, min_vz, 0.0f);
@@ -392,6 +395,20 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
         target_vx = remap(pitch_ctrl, -500.0f, -4500.0f, 0.0f, max_vx);
     } 
 
+    float target_roll_diff = 0.0f;
+    if (roll_ctrl < -500.0f) {
+        target_roll_diff = remap(roll_ctrl, -4500.0f, -500.0f, 0.4f, 0.0f);
+    } else if (roll_ctrl > 500.0f) {
+        target_roll_diff = remap(roll_ctrl, 500.0f, 4500.0f, 0.0f, -0.4f);
+    }
+
+    float target_yaw_diff = 0.0f;
+    if (yaw_ctrl < -500.0f) {
+        target_yaw_diff = remap(yaw_ctrl, -4500.0f, -500.0f, -0.4f, 0.0f);
+    } else if (yaw_ctrl > 500.0f) {
+        target_yaw_diff = remap(yaw_ctrl, 500.0f, 4500.0f, 0.0f, 0.4f);
+    }
+
     // get NN input
     float observation[OB_SPACE_SIZE];
     get_observation_vector(observation);
@@ -403,12 +420,27 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
         _thrust_rpyt_out[i] = action[i];
     }
 
+    _thrust_rpyt_out[0] += target_roll_diff;
+    _thrust_rpyt_out[3] += target_roll_diff;
+    _thrust_rpyt_out[1] -= target_roll_diff;
+    _thrust_rpyt_out[2] -= target_roll_diff;
+
+    _thrust_rpyt_out[0] += target_yaw_diff;
+    _thrust_rpyt_out[1] += target_yaw_diff;
+    _thrust_rpyt_out[2] -= target_yaw_diff;
+    _thrust_rpyt_out[3] -= target_yaw_diff;
+
+    for (int i = 0;i < AC_SPACE_SIZE;i ++) {
+        _thrust_rpyt_out[i] = clamp(_thrust_rpyt_out[i], 0.0, FINAL_BIAS * 2.0);
+    }
+
     // save info to copter
     // _copter.rpy[0] = roll; _copter.rpy[1] = pitch; _copter.rpy[2] = yaw;
     _copter.rpy[0] = observation[0]; _copter.rpy[1] = observation[1]; _copter.rpy[2] = observation[2];
     _copter.vel_ned[0] = observation[3]; _copter.vel_ned[1] = observation[4]; _copter.vel_ned[2] = observation[5];
     _copter.omega[0] = observation[6]; _copter.omega[1] = observation[7]; _copter.omega[2] = observation[8];
     _copter.target_vx = target_vx; _copter.target_vz = target_vz;
+    _copter.target_roll_diff = target_roll_diff; _copter.target_yaw_diff = target_yaw_diff;
     for (int i = 0;i < AC_SPACE_SIZE;i++) {
         _copter.desired_thrust[i] = _thrust_rpyt_out[i];
     }
