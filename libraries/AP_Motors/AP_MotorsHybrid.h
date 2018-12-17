@@ -14,6 +14,9 @@
 // Forward declaration.
 class Copter;
 
+#define RUN_PID     1
+#define RUN_NN      1
+
 /// @class      AP_MotorsHybrid
 class AP_MotorsHybrid : public AP_MotorsMatrix {
 public:
@@ -35,7 +38,6 @@ protected:
     void                collect_rpy();
     Matrix3f            get_rotation_matrix();
     void                get_angle_axis(float angle_axis[]);
-    void                get_velocity(float vel[]);
     void                get_velocity_body(float vel[]);
     void                get_angular_velocity(float omega[]);
 
@@ -65,6 +67,11 @@ private:
     bool initialization_finished;
     double initial_yaw_sum;
     int yaw_count;
+
+    float _thrust_rpyt_out_NN[AP_MOTORS_MAX_NUM_MOTORS];
+
+    // NN motor output
+    int16_t _motor_out_NN[AP_MOTORS_MAX_NUM_MOTORS];
 };
 
 #endif  // AP_MOTORSHybrid

@@ -321,10 +321,11 @@ enum DevOptions {
 #define LOG_THROW_MSG                   0x23
 #define LOG_PROXIMITY_MSG               0x24
 // Jie Xu
-// For NN LOg
+// For NN Log
 #define LOG_INPUT_MSG                   0x25
-#define LOG_OUTPUT_MSG                  0x26
-#define LOG_VAR_MSG                     0x27
+#define LOG_NN_OUTPUT_MSG               0x26
+#define LOG_PID_OUTPUT_MSG              0x27
+#define LOG_VAR_MSG                     0x28
 
 #define MASK_LOG_ATTITUDE_FAST          (1<<0)
 #define MASK_LOG_ATTITUDE_MED           (1<<1)

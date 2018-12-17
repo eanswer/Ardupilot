@@ -379,7 +379,7 @@ void Copter::Log_Write_Input()
 }
 
 // For NN controller output
-struct PACKED log_output {
+struct PACKED log_nn_output {
     LOG_PACKET_HEADER;
     uint64_t time_us;
     float   desired_out_0;
@@ -387,18 +387,52 @@ struct PACKED log_output {
     float   desired_out_2;
     float   desired_out_3;
     float   desired_out_4;
+    int16_t motor_out_0;
+    int16_t motor_out_1;
+    int16_t motor_out_2;
+    int16_t motor_out_3;
+    int16_t motor_out_4;
 };
 
-void Copter::Log_Write_Output()
+void Copter::Log_Write_NN_Output()
 {
-    struct log_output pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_OUTPUT_MSG),
+    struct log_nn_output pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_NN_OUTPUT_MSG),
         time_us         : AP_HAL::micros64(),
         desired_out_0   : desired_thrust[0],
         desired_out_1   : desired_thrust[1],
         desired_out_2   : desired_thrust[2],
         desired_out_3   : desired_thrust[3],
-        desired_out_4   : desired_thrust[4]
+        desired_out_4   : desired_thrust[4],
+        motor_out_0     : motor_out_NN[0],
+        motor_out_1     : motor_out_NN[1],
+        motor_out_2     : motor_out_NN[2],
+        motor_out_3     : motor_out_NN[3],
+        motor_out_4     : motor_out_NN[4]
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+// For PID controller output
+struct PACKED log_pid_output {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    int16_t motor_out_0;
+    int16_t motor_out_1;
+    int16_t motor_out_2;
+    int16_t motor_out_3;
+    int16_t motor_out_4;
+};
+
+void Copter::Log_Write_PID_Output()
+{
+    struct log_pid_output pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_PID_OUTPUT_MSG),
+        time_us         : AP_HAL::micros64(),
+        motor_out_0     : motor_out_pid[0],
+        motor_out_1     : motor_out_pid[1],
+        motor_out_2     : motor_out_pid[2],
+        motor_out_3     : motor_out_pid[3],
+        motor_out_4     : motor_out_pid[4]
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -413,6 +447,7 @@ struct PACKED log_var {
     int     spool_mode;
     float   rotation_matrix_diff;
     float   target_roll_diff;
+    float   target_pitch_diff;
     float   target_yaw_diff;
 };
 
@@ -427,6 +462,7 @@ void Copter::Log_Write_Var()
         spool_mode      : spool_mode,
         rotation_matrix_diff : rotation_matrix_diff,
         target_roll_diff: target_roll_diff,
+        target_pitch_diff: target_pitch_diff,
         target_yaw_diff : target_yaw_diff
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
@@ -975,10 +1011,12 @@ const struct LogStructure Copter::log_structure[] = {
       "PRX",   "QBfffffffffff","TimeUS,Health,D0,D45,D90,D135,D180,D225,D270,D315,DUp,CAn,CDis" },
     { LOG_INPUT_MSG, sizeof(log_input),
       "INPU",  "Qfffffffffff", "TimeUS,roll,pitch,yaw,vx,vy,vz,wx,wy,wz,tvx,tvz"},
-    { LOG_OUTPUT_MSG, sizeof(log_output),
-      "OUTP",  "Qfffff", "TimeUS,T0,T1,T2,T3,T4"},
+    { LOG_NN_OUTPUT_MSG, sizeof(log_nn_output),
+      "NNOU",  "Qfffffhhhhh", "TimeUS,T0,T1,T2,T3,T4,OUT0,OUT1,OUT2,OUT3,OUT4"},
+    { LOG_PID_OUTPUT_MSG, sizeof(log_pid_output),
+      "PIDO",  "Qhhhhh", "TimeUS,OUT0,OUT1,OUT2,OUT3,OUT4"},
     { LOG_VAR_MSG, sizeof(log_var),
-      "VAR",   "QffHifff", "TimeUS,Volt,Yaw0,mode,spool,rotdiff,rolldiff,yawdiff"},
+      "VAR",   "QffHiffff", "TimeUS,Volt,Yaw0,mode,spool,rotdiff,rolldiff,pitchdiff,yawdiff"},
 };
 
 #if CLI_ENABLED == ENABLED

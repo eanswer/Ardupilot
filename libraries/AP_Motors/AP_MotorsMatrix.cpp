@@ -124,13 +124,18 @@ void AP_MotorsMatrix::output_to_motors()
             }
             break;
     }
-
-    // send output to each motor
+    
     for (i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
         if (motor_enabled[i]) {
-            rc_write(i, motor_out[i]);
+            _motor_out_pid[i] = motor_out[i];
         }
     }
+    // send output to each motor
+    // for (i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
+    //     if (motor_enabled[i]) {
+    //         rc_write(i, motor_out[i]);
+    //     }
+    // }
 }
 
 

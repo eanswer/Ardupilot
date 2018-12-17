@@ -391,6 +391,11 @@ void Copter::fourhundred_hz_logging()
     if (should_log(MASK_LOG_ATTITUDE_FAST)) {
         Log_Write_Attitude();
     }
+
+    Log_Write_Input();
+    Log_Write_NN_Output();
+    Log_Write_PID_Output();
+    Log_Write_Var();
 }
 
 // ten_hz_logging_loop
@@ -429,9 +434,10 @@ void Copter::ten_hz_logging_loop()
     }
     // Jie Xu
     // For Controller
-    Log_Write_Input();
-    Log_Write_Output();
-    Log_Write_Var();
+    // Log_Write_Input();
+    // Log_Write_NN_Output();
+    // Log_Write_PID_Output();
+    // Log_Write_Var();
     
 #if FRAME_CONFIG == HELI_FRAME
     Log_Write_Heli();

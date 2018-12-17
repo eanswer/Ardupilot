@@ -215,9 +215,10 @@ public:
     // Controller Infomation
     float angle_axis[3], rpy[3], vel_ned[3], omega[3], target_vx, target_vz;
     float desired_thrust[5];
+    int16_t motor_out_NN[5], motor_out_pid[5];
     float real_battery, yaw_0;
     float rotation_matrix_diff;
-    float target_roll_diff, target_yaw_diff;
+    float target_roll_diff, target_pitch_diff, target_yaw_diff;
     uint16_t policy_mode;
     int   spool_mode;
     int16_t thr_ctrl_in;
@@ -822,7 +823,8 @@ private:
     // Jie Xu
     // For NN controller log
     void Log_Write_Input();
-    void Log_Write_Output();
+    void Log_Write_NN_Output();
+    void Log_Write_PID_Output();
     void Log_Write_Var();
 
 #if FRAME_CONFIG == HELI_FRAME
