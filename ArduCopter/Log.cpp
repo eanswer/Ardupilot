@@ -355,6 +355,7 @@ struct PACKED log_input {
     float    omega_y;
     float    omega_z;
     float    target_vx;
+    float    target_vy;
     float    target_vz;
 };
 
@@ -373,6 +374,7 @@ void Copter::Log_Write_Input()
         omega_y         : omega[1],
         omega_z         : omega[2],
         target_vx       : target_vx,
+        target_vy       : target_vy,
         target_vz       : target_vz
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
@@ -1010,7 +1012,7 @@ const struct LogStructure Copter::log_structure[] = {
     { LOG_PROXIMITY_MSG, sizeof(log_Proximity),
       "PRX",   "QBfffffffffff","TimeUS,Health,D0,D45,D90,D135,D180,D225,D270,D315,DUp,CAn,CDis" },
     { LOG_INPUT_MSG, sizeof(log_input),
-      "INPU",  "Qfffffffffff", "TimeUS,roll,pitch,yaw,vx,vy,vz,wx,wy,wz,tvx,tvz"},
+      "INPU",  "Qffffffffffff", "TimeUS,roll,pitch,yaw,vx,vy,vz,wx,wy,wz,tvx,tvy,tvz"},
     { LOG_NN_OUTPUT_MSG, sizeof(log_nn_output),
       "NNOU",  "Qfffffhhhhh", "TimeUS,T0,T1,T2,T3,T4,OUT0,OUT1,OUT2,OUT3,OUT4"},
     { LOG_PID_OUTPUT_MSG, sizeof(log_pid_output),

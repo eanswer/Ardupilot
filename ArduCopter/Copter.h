@@ -195,7 +195,7 @@ public:
         return ahrs.sin_yaw();
     }
     Vector3f get_omega_body() const {
-        return ahrs.get_gyro();;
+        return ahrs.get_gyro();
     }
     const Matrix3f& get_rotation_matrix() const {
         return ahrs.get_rotation_body_to_ned();
@@ -213,7 +213,7 @@ public:
     }
 
     // Controller Infomation
-    float angle_axis[3], rpy[3], vel_ned[3], omega[3], target_vx, target_vz;
+    float angle_axis[3], rpy[3], vel_ned[3], omega[3], target_vx, target_vy, target_vz;
     float desired_thrust[5];
     int16_t motor_out_NN[5], motor_out_pid[5];
     float real_battery, yaw_0;

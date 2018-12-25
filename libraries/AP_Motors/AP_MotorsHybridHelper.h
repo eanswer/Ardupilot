@@ -3,8 +3,10 @@
 
 #include <AP_Math/AP_Math.h>        // ArduPilot Mega Vector/Matrix math Library
 
-const float min_vx = 0.0f;
+const float min_vx = -1.0f;
 const float max_vx = 1.0f;
+const float min_vy = -1.0f;
+const float max_vy = 1.0f;
 const float min_vz = 1.0f;
 const float max_vz = -1.0f;
 const float max_pwm = 2000.0f;

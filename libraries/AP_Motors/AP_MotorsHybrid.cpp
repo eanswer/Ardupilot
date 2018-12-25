@@ -94,6 +94,8 @@ void AP_MotorsHybrid::output_to_motors() {
                     initialization_finished = false;
                     initial_yaw_sum = 0.0;
                     yaw_count = 0;
+                    target_yaw_diff = 0.0f;
+                    last_omega[0] = last_omega[1] = last_omega[2] = 0;
                     break;
                 }
                 case SPIN_WHEN_ARMED:
@@ -133,14 +135,12 @@ void AP_MotorsHybrid::output_to_motors() {
     // send output to each motor
     if (mode == 0) {
         for (int i = 0; i < AC_SPACE_SIZE; i++) {
-            // rc_write(i, _motor_out_NN[i]);
-            float output = _motor_out_pid[i] * 0.2 + _motor_out_NN[i] * 0.8;
-            rc_write(i, (int16_t)output);
+            rc_write(i, _motor_out_NN[i]);
+            // float output = _motor_out_pid[i] * 0.2 + _motor_out_NN[i] * 0.8;
+            // rc_write(i, (int16_t)output);
         }
     } else {
         for (int i = 0;i < AC_SPACE_SIZE; i++) {
-            // float output = _motor_out_pid[i] * 0.6 + _motor_out_NN[i] * 0.4;
-            // rc_write(i, (int16_t)output);
             rc_write(i, _motor_out_pid[i]);
         }
     }
@@ -154,31 +154,29 @@ void AP_MotorsHybrid::get_observation_vector(float ob[]) {
         ob[i] = state[i];
     }
     ob[STATE_SIZE] = target_vx;
-    ob[STATE_SIZE + 1] = target_vz;
+    ob[STATE_SIZE + 1] = target_vy;
+    ob[STATE_SIZE + 2] = target_vz;
 }
 
 void AP_MotorsHybrid::get_state(float state[]) {
     collect_rpy();
 
-    // float angle_axis[3];
-    // get_angle_axis(angle_axis);
     float vel[3];
-    // get_velocity(vel);
     get_velocity_body(vel);
-    vel[0] = clamp(vel[0], -0.2, 1.0);
-    vel[1] = clamp(vel[1], -1.0, 1.0);
-    vel[2] = clamp(vel[2], -1.0, 1.0);
 
     float omega[3];
     get_angular_velocity(omega);
-    omega[0] = clamp(omega[0], -1.0, 1.0);
-    omega[1] = clamp(omega[1], -1.0, 1.0);
-    omega[2] = clamp(omega[2], -1.0, 1.0);
 
-    // state[0] = angle_axis[0]; state[1] = angle_axis[1]; state[2] = angle_axis[2];
-    state[0] = roll; state[1] = pitch; state[2] = yaw;
+    state[0] = roll; state[1] = pitch; state[2] = yaw - target_yaw_diff;
     state[3] = vel[0]; state[4] = vel[1]; state[5] = vel[2];
     state[6] = omega[0]; state[7] = omega[1]; state[8] = omega[2];
+
+    wrap2PI(state[2]);
+
+    state[2] = clamp(state[2], -0.1, 0.1);
+    for (int i = 3;i < 9;i++) {
+        state[i] = clamp(state[i], -1.5, 1.5);
+    }
 }
 
 void AP_MotorsHybrid::collect_rpy() {
@@ -278,10 +276,13 @@ void AP_MotorsHybrid::get_angular_velocity(float omega[]) {
 
 void AP_MotorsHybrid::get_angular_velocity(float omega[]) {
     Vector3f omega_body = _copter.get_omega_body();
-    Vector3f _omega = get_rotation_matrix() * omega_body;
+    /*Vector3f _omega = get_rotation_matrix() * omega_body;
     omega[0] = _omega.x;
     omega[1] = _omega.y;
-    omega[2] = _omega.z;
+    omega[2] = _omega.z;*/
+    omega[0] = omega_body[0];
+    omega[1] = omega_body[1];
+    omega[2] = omega_body[2];
 }
 
 void AP_MotorsHybrid::pi_act(float ob[], float action[]) {
@@ -361,6 +362,8 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
         if (yaw_count == 4000) {
             yaw_0 = (float)(initial_yaw_sum / yaw_count);
             initialization_finished = true;
+            target_yaw_diff = 0.0;
+            last_omega[0] = last_omega[1] = last_omega[2] = 0;
         }
     }
     
@@ -375,6 +378,22 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
         const float roll_ctrl = (float)_copter.get_channel_roll_control_in();
         const float yaw_ctrl = (float)_copter.get_channel_yaw_control_in();
 
+        target_vx = 0.0f;
+        if (pitch_ctrl > 500.0f) {
+            target_vx = remap(pitch_ctrl, 500.0, 4500.0f, 0.0f, min_vx);
+        } else if (pitch_ctrl < -500.0f) {
+            target_vx = remap(pitch_ctrl, -500.0f, -4500.0f, 0.0f, max_vx);
+        } else {
+            target_vx = 0.0f;
+        }
+        target_vy = 0.0f;
+        if (roll_ctrl > 500.0f) {
+            target_vy = remap(roll_ctrl, 500.0, 4500.0f, 0.0f, max_vy);
+        } else if (roll_ctrl < -500.0f) {
+            target_vy = remap(roll_ctrl, -500.0f, -4500.0f, 0.0f, min_vy);
+        } else {
+            target_vy = 0.0f;
+        }
         target_vz = 0.0f;
         if (thr_ctrl < 400.0f) {
             target_vz = remap(thr_ctrl, 0.0f, 400.0f, min_vz, 0.0f);
@@ -383,30 +402,16 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
         } else {
             target_vz = 0;
         }
-        target_vx = 0.0f;
-        float target_pitch_diff = 0.0f;
-        if (pitch_ctrl > 500.0f) {
-            target_vx = 0.0f;
-            target_pitch_diff = remap(pitch_ctrl, 500.0, 4500.0f, 0.0f, -max_vx);
-        } else if (pitch_ctrl < -500.0f) {
-            target_vx = remap(pitch_ctrl, -500.0f, -4500.0f, 0.0f, max_vx);
-        } else {
-            target_vx = 0.0f;
-        }
 
-        float target_roll_diff = 0.0f;
-        if (roll_ctrl < -500.0f) {
-            target_roll_diff = remap(roll_ctrl, -4500.0f, -500.0f, 0.2f, 0.0f);
-        } else if (roll_ctrl > 500.0f) {
-            target_roll_diff = remap(roll_ctrl, 500.0f, 4500.0f, 0.0f, -0.2f);
-        }
-
-        float target_yaw_diff = 0.0f;
+        float target_yaw_vel = 0.0f;
         if (yaw_ctrl < -500.0f) {
-            target_yaw_diff = remap(yaw_ctrl, -4500.0f, -500.0f, -0.2f, 0.0f);
+            target_yaw_vel = remap(yaw_ctrl, -4500.0f, -500.0f, -0.5f, 0.0f);
         } else if (yaw_ctrl > 500.0f) {
-            target_yaw_diff = remap(yaw_ctrl, 500.0f, 4500.0f, 0.0f, 0.2f);
+            target_yaw_vel = remap(yaw_ctrl, 500.0f, 4500.0f, 0.0f, 0.5f);
+        } else {
+            target_yaw_vel = 0.0;
         }
+        target_yaw_diff += target_yaw_vel * 0.0025;
 
         // get NN input
         float observation[OB_SPACE_SIZE];
@@ -419,21 +424,6 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
             _thrust_rpyt_out_NN[i] = action[i];
         }
 
-        _thrust_rpyt_out_NN[0] += target_roll_diff;
-        _thrust_rpyt_out_NN[3] += target_roll_diff;
-        _thrust_rpyt_out_NN[1] -= target_roll_diff;
-        _thrust_rpyt_out_NN[2] -= target_roll_diff;
-
-        _thrust_rpyt_out_NN[0] += target_pitch_diff;
-        _thrust_rpyt_out_NN[2] += target_pitch_diff;
-        _thrust_rpyt_out_NN[1] -= target_pitch_diff;
-        _thrust_rpyt_out_NN[3] -= target_pitch_diff;
-
-        _thrust_rpyt_out_NN[0] += target_yaw_diff;
-        _thrust_rpyt_out_NN[1] += target_yaw_diff;
-        _thrust_rpyt_out_NN[2] -= target_yaw_diff;
-        _thrust_rpyt_out_NN[3] -= target_yaw_diff;
-
         for (int i = 0;i < AC_SPACE_SIZE;i ++) {
             _thrust_rpyt_out_NN[i] = clamp(_thrust_rpyt_out_NN[i], 0.0, FINAL_BIAS * 2.0);
         }
@@ -442,8 +432,8 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
         _copter.rpy[0] = observation[0]; _copter.rpy[1] = observation[1]; _copter.rpy[2] = observation[2];
         _copter.vel_ned[0] = observation[3]; _copter.vel_ned[1] = observation[4]; _copter.vel_ned[2] = observation[5];
         _copter.omega[0] = observation[6]; _copter.omega[1] = observation[7]; _copter.omega[2] = observation[8];
-        _copter.target_vx = target_vx; _copter.target_vz = target_vz;
-        _copter.target_roll_diff = target_roll_diff; _copter.target_pitch_diff = target_pitch_diff; _copter.target_yaw_diff = target_yaw_diff;
+        _copter.target_vx = target_vx; _copter.target_vy = target_vy; _copter.target_vz = target_vz;
+        _copter.target_yaw_diff = target_yaw_diff;
         for (int i = 0;i < AC_SPACE_SIZE;i++) {
             _copter.desired_thrust[i] = _thrust_rpyt_out_NN[i];
         }

@@ -56,11 +56,13 @@ private:
     uint16_t mode; // 0 for our own policy, 1 for althold mode
 
     // target
-    float target_vx, target_vz;
-    
+    float target_vx, target_vy, target_vz;
+    float target_yaw_diff;
+
     // state
     float roll, pitch, yaw;
-
+    float last_omega[3];
+    
     // initial values
     float yaw_0;
 
