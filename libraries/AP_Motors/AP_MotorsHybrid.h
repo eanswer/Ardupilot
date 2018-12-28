@@ -22,7 +22,7 @@ class AP_MotorsHybrid : public AP_MotorsMatrix {
 public:
     /// Constructor
     AP_MotorsHybrid(uint16_t loop_rate, uint16_t speed_hz, Copter& cop)
-        : AP_MotorsMatrix(loop_rate, speed_hz), _copter(cop) { }
+        : AP_MotorsMatrix(loop_rate, speed_hz), _copter(cop), I_dt(0.0025) { }
     virtual ~AP_MotorsHybrid() {}
 
     void                set_radios_switch(uint16_t switch_CH6);
@@ -36,8 +36,6 @@ protected:
     void                get_observation_vector(float ob[]);
     void                get_state(float state[]);
     void                collect_rpy();
-    Matrix3f            get_rotation_matrix();
-    void                get_angle_axis(float angle_axis[]);
     void                get_velocity_body(float vel[]);
     void                get_angular_velocity(float omega[]);
 
@@ -59,6 +57,11 @@ private:
     float target_vx, target_vy, target_vz;
     float target_yaw_diff;
 
+    // I term
+    float I_error[4];
+    float I_dt;
+    bool I_activated;
+    
     // state
     float roll, pitch, yaw;
     float last_omega[3];

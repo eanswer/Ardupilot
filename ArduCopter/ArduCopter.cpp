@@ -393,6 +393,7 @@ void Copter::fourhundred_hz_logging()
     }
 
     Log_Write_Input();
+    Log_Write_Input_Parse();
     Log_Write_NN_Output();
     Log_Write_PID_Output();
     Log_Write_Var();

@@ -213,6 +213,7 @@ public:
     }
 
     // Controller Infomation
+    float ob[13];
     float angle_axis[3], rpy[3], vel_ned[3], omega[3], target_vx, target_vy, target_vz;
     float desired_thrust[5];
     int16_t motor_out_NN[5], motor_out_pid[5];
@@ -823,6 +824,7 @@ private:
     // Jie Xu
     // For NN controller log
     void Log_Write_Input();
+    void Log_Write_Input_Parse();
     void Log_Write_NN_Output();
     void Log_Write_PID_Output();
     void Log_Write_Var();

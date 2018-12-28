@@ -96,6 +96,10 @@ void AP_MotorsHybrid::output_to_motors() {
                     yaw_count = 0;
                     target_yaw_diff = 0.0f;
                     last_omega[0] = last_omega[1] = last_omega[2] = 0;
+                    for (i = 0;i < 4;i ++) {
+                        I_error[i] = 0.0f;
+                    }
+                    I_activated = false;
                     break;
                 }
                 case SPIN_WHEN_ARMED:
@@ -150,12 +154,25 @@ void AP_MotorsHybrid::output_to_motors() {
 void AP_MotorsHybrid::get_observation_vector(float ob[]) {
     float state[STATE_SIZE];
     get_state(state);
-    for (int i = 0;i < STATE_SIZE;i++) {
-        ob[i] = state[i];
+
+    float error[4];
+    error[0] = target_vx - state[3]; error[1] = target_vy - state[4]; error[2] = target_vz - state[5]; error[3] = target_yaw_diff - state[2];
+    if (target_vz < 0.0) {
+        I_activated = true;
     }
-    ob[STATE_SIZE] = target_vx;
-    ob[STATE_SIZE + 1] = target_vy;
-    ob[STATE_SIZE + 2] = target_vz;
+    if (I_activated) {
+        for (int i = 0;i < 4;i++) {
+            I_error[i] = I_error[i] * 0.995 + I_dt * error[i];
+            I_error[i] = clamp(I_error[i], -10.0, 10.0);
+        }
+    }
+
+    ob[0] = state[0]; ob[1] = state[1]; ob[2] = state[2] - target_yaw_diff;
+    ob[3] = state[6]; ob[4] = state[7]; ob[5] = state[8];
+    ob[6] = error[0]; ob[7] = error[1]; ob[8] = error[2];
+    ob[9] = I_error[0]; ob[10] = I_error[1]; ob[11] = I_error[2]; ob[12] = I_error[3];
+
+    wrap2PI(ob[2]);
 }
 
 void AP_MotorsHybrid::get_state(float state[]) {
@@ -173,10 +190,10 @@ void AP_MotorsHybrid::get_state(float state[]) {
 
     wrap2PI(state[2]);
 
-    state[2] = clamp(state[2], -0.1, 0.1);
-    for (int i = 3;i < 9;i++) {
-        state[i] = clamp(state[i], -1.5, 1.5);
-    }
+    // state[2] = clamp(state[2], -0.1, 0.1);
+    // for (int i = 3;i < 9;i++) {
+    //     state[i] = clamp(state[i], -1.5, 1.5);
+    // }
 }
 
 void AP_MotorsHybrid::collect_rpy() {
@@ -184,66 +201,6 @@ void AP_MotorsHybrid::collect_rpy() {
     pitch = _copter.get_pitch();
     yaw = _copter.get_yaw() - yaw_0;
     wrap2PI(yaw);
-}
-
-Matrix3f AP_MotorsHybrid::get_rotation_matrix() {    
-    // another option here is: ahrs.get_rotation_body_to_ned()
-    Matrix3f R_roll, R_pitch, R_yaw;
-    
-    R_roll[0][0] = 1; R_roll[0][1] = 0; R_roll[0][2] = 0;
-    R_roll[1][0] = 0; R_roll[1][1] = cos(roll); R_roll[1][2] = -sin(roll);
-    R_roll[2][0] = 0; R_roll[2][1] = sin(roll); R_roll[2][2] = cos(roll);
-
-    R_pitch[0][0] = cos(pitch); R_pitch[0][1] = 0; R_pitch[0][2] = sin(pitch);
-    R_pitch[1][0] = 0; R_pitch[1][1] = 1; R_pitch[1][2] = 0;
-    R_pitch[2][0] = -sin(pitch); R_pitch[2][1] = 0; R_pitch[2][2] = cos(pitch);
-
-    R_yaw[0][0] = cos(yaw); R_yaw[0][1] = -sin(yaw); R_yaw[0][2] = 0;
-    R_yaw[1][0] = sin(yaw); R_yaw[1][1] = cos(yaw); R_yaw[1][2] = 0;
-    R_yaw[2][0] = 0; R_yaw[2][1] = 0; R_yaw[2][2] = 1;
-
-    Matrix3f rotation_matrix = R_yaw * R_pitch * R_roll;
-    
-    // const Matrix3f rotation_matrix_from_ahrs = _copter.get_rotation_matrix();
-    // float diff = 0;
-    // for (int i = 0;i < 3;i++)
-    //     for (int j = 0;j < 3;j++)
-    //         diff += (rotation_matrix[i][j] - rotation_matrix_from_ahrs[i][j]) * (rotation_matrix[i][j] - rotation_matrix_from_ahrs[i][j]);
-    
-    // _copter.rotation_matrix_diff = diff;
-
-    return rotation_matrix;
-}
-
-void AP_MotorsHybrid::get_angle_axis(float angle_axis[]) {
-    // first convert rpy to unit quaternion
-    float cy = cos(yaw * 0.5);
-    float sy = sin(yaw * 0.5);
-    float cr = cos(roll * 0.5);
-    float sr = sin(roll * 0.5);
-    float cp = cos(pitch * 0.5);
-    float sp = sin(pitch * 0.5);
-
-    float w = cy * cr * cp + sy * sr * sp;
-    float x = cy * sr * cp - sy * cr * sp;
-    float y = cy * cr * sp + sy * sr * cp;
-    float z = sy * cr * cp - cy * sr * sp;
-
-    float len = sqrt(w * w + x * x + y * y + z * z);
-    w /= len; x /= len; y /= len; z /= len;
-
-    // convert unit quaternion to angle axis
-    float angle = 2.0 * acos(w);
-    wrap2PI(angle);
-
-    float a = sqrt(1.0 - w * w);
-    float axis_x = x / a;
-    float axis_y = y / a;
-    float axis_z = z / a;
-
-    angle_axis[0] = axis_x * a;
-    angle_axis[1] = axis_y * a;
-    angle_axis[2] = axis_z * a;
 }
 
 // local NED frame
@@ -254,32 +211,8 @@ void AP_MotorsHybrid::get_velocity_body(float vel[]) {
     vel[2] = velocity_ef[2];
 }
 
-/*
-void AP_MotorsHybrid::get_angular_velocity(float omega[]) {
-    // first convert roll_rate, pitch_rate, yaw_rate into body-frame angular velocity p_b, q_b, r_b
-    // based on MAV331 Lec9
-    // [p, q, r]' = [1, 0,           -sin(pitch)
-    //               0, cos(roll),   sin(roll)*cos(pitch)
-    //               0, -sin(roll),  cos(roll)*cos(pitch)]
-    // * [roll_rate, pitch_rate, yaw_rate]'
-    Matrix3f rpy_rate_to_pqr_matrix;
-    rpy_rate_to_pqr_matrix[0][0] = 1; rpy_rate_to_pqr_matrix[0][1] = 0; rpy_rate_to_pqr_matrix[0][2] = -sin(pitch);
-    rpy_rate_to_pqr_matrix[1][0] = 0; rpy_rate_to_pqr_matrix[1][1] = cos(roll); rpy_rate_to_pqr_matrix[1][2] = sin(roll) * cos(pitch);
-    rpy_rate_to_pqr_matrix[2][0] = 0; rpy_rate_to_pqr_matrix[2][1] = -sin(roll); rpy_rate_to_pqr_matrix[2][2] = cos(roll) * cos(pitch);
-
-    Vector3f rpy_rate(_copter.get_roll_rate(), _copter.get_pitch_rate(), _copter.get_yaw_rate());
-    Vector3f pqr_body = rpy_rate_to_pqr_matrix * rpy_rate;
-    
-    // then convert pqr body to pqr world
-    Vector3f pqr_world = get_rotation_matrix() * pqr_body;
-}*/
-
 void AP_MotorsHybrid::get_angular_velocity(float omega[]) {
     Vector3f omega_body = _copter.get_omega_body();
-    /*Vector3f _omega = get_rotation_matrix() * omega_body;
-    omega[0] = _omega.x;
-    omega[1] = _omega.y;
-    omega[2] = _omega.z;*/
     omega[0] = omega_body[0];
     omega[1] = omega_body[1];
     omega[2] = omega_body[2];
@@ -290,6 +223,7 @@ void AP_MotorsHybrid::pi_act(float ob[], float action[]) {
     float ob_normalized[OB_SPACE_SIZE];
     for (int i = 0;i < OB_SPACE_SIZE;i++) {
         ob_normalized[i] = (ob[i] - ob_mean[i]) / ob_std[i];
+        ob_normalized[i] = clamp(ob_normalized[i], -5.0, 5.0);
     }
 
     // run mlp policy
@@ -364,6 +298,10 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
             initialization_finished = true;
             target_yaw_diff = 0.0;
             last_omega[0] = last_omega[1] = last_omega[2] = 0;
+            for (int i = 0;i < 4;i ++) {
+                I_error[i] = 0.0f;
+            }
+            I_activated = false;
         }
     }
     
@@ -429,9 +367,12 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
         }
 
         // save info to copter
-        _copter.rpy[0] = observation[0]; _copter.rpy[1] = observation[1]; _copter.rpy[2] = observation[2];
-        _copter.vel_ned[0] = observation[3]; _copter.vel_ned[1] = observation[4]; _copter.vel_ned[2] = observation[5];
-        _copter.omega[0] = observation[6]; _copter.omega[1] = observation[7]; _copter.omega[2] = observation[8];
+        for (int i = 0;i < 13;i++) {
+            _copter.ob[i] = observation[i];
+        }
+        _copter.rpy[0] = roll; _copter.rpy[1] = pitch; _copter.rpy[2] = yaw;
+        _copter.vel_ned[0] = target_vx - observation[6]; _copter.vel_ned[1] = target_vy - observation[7]; _copter.vel_ned[2] = target_vz - observation[8];
+        _copter.omega[0] = observation[3]; _copter.omega[1] = observation[4]; _copter.omega[2] = observation[5];
         _copter.target_vx = target_vx; _copter.target_vy = target_vy; _copter.target_vz = target_vz;
         _copter.target_yaw_diff = target_yaw_diff;
         for (int i = 0;i < AC_SPACE_SIZE;i++) {

@@ -348,6 +348,47 @@ struct PACKED log_input {
     float    roll;
     float    pitch;
     float    yaw;
+    float    omega_x;
+    float    omega_y;
+    float    omega_z;
+    float    error_vx;
+    float    error_vy;
+    float    error_vz;
+    float    I_error_vx;
+    float    I_error_vy;
+    float    I_error_vz;
+    float    I_error_yaw;
+};
+
+void Copter::Log_Write_Input()
+{
+    struct log_input pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_INPUT_MSG),
+        time_us         : AP_HAL::micros64(),
+        roll            : ob[0],
+        pitch           : ob[1],
+        yaw             : ob[2],
+        omega_x         : ob[3],
+        omega_y         : ob[4],
+        omega_z         : ob[5],
+        error_vx        : ob[6],
+        error_vy        : ob[7],
+        error_vz        : ob[8],
+        I_error_vx      : ob[9],
+        I_error_vy      : ob[10],
+        I_error_vz      : ob[11],
+        I_error_yaw     : ob[12]
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+// For NN controller input
+struct PACKED log_input_parse {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float    roll;
+    float    pitch;
+    float    yaw;
     float    vx;
     float    vy;
     float    vz;
@@ -359,10 +400,10 @@ struct PACKED log_input {
     float    target_vz;
 };
 
-void Copter::Log_Write_Input()
+void Copter::Log_Write_Input_Parse()
 {
-    struct log_input pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_INPUT_MSG),
+    struct log_input_parse pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_INPUT_PARSE_MSG),
         time_us         : AP_HAL::micros64(),
         roll            : rpy[0],
         pitch           : rpy[1],
@@ -1012,7 +1053,9 @@ const struct LogStructure Copter::log_structure[] = {
     { LOG_PROXIMITY_MSG, sizeof(log_Proximity),
       "PRX",   "QBfffffffffff","TimeUS,Health,D0,D45,D90,D135,D180,D225,D270,D315,DUp,CAn,CDis" },
     { LOG_INPUT_MSG, sizeof(log_input),
-      "INPU",  "Qffffffffffff", "TimeUS,roll,pitch,yaw,vx,vy,vz,wx,wy,wz,tvx,tvy,tvz"},
+      "INPU",  "Qfffffffffffff", "TimeUS,roll,pitch,yaw,wx,wy,wz,evx,evy,evz,Ivx,Ivy,Ivz,Iyaw"},
+    { LOG_INPUT_PARSE_MSG, sizeof(log_input_parse),
+      "INPP",  "Qffffffffffff", "TimeUS,roll,pitch,yaw,vx,vy,vz,wx,wy,wz,tvx,tvy,tvz"},
     { LOG_NN_OUTPUT_MSG, sizeof(log_nn_output),
       "NNOU",  "Qfffffhhhhh", "TimeUS,T0,T1,T2,T3,T4,OUT0,OUT1,OUT2,OUT3,OUT4"},
     { LOG_PID_OUTPUT_MSG, sizeof(log_pid_output),

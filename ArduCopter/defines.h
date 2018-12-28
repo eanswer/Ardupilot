@@ -323,9 +323,10 @@ enum DevOptions {
 // Jie Xu
 // For NN Log
 #define LOG_INPUT_MSG                   0x25
-#define LOG_NN_OUTPUT_MSG               0x26
-#define LOG_PID_OUTPUT_MSG              0x27
-#define LOG_VAR_MSG                     0x28
+#define LOG_INPUT_PARSE_MSG             0X26
+#define LOG_NN_OUTPUT_MSG               0x27
+#define LOG_PID_OUTPUT_MSG              0x28
+#define LOG_VAR_MSG                     0x29
 
 #define MASK_LOG_ATTITUDE_FAST          (1<<0)
 #define MASK_LOG_ATTITUDE_MED           (1<<1)
