@@ -157,7 +157,7 @@ void AP_MotorsHybrid::get_observation_vector(float ob[]) {
 
     float error[4];
     error[0] = target_vx - state[3]; error[1] = target_vy - state[4]; error[2] = target_vz - state[5]; error[3] = target_yaw_diff - state[2];
-    if (target_vz < 0.0) {
+    if (target_vz <= 0.05) {
         I_activated = true;
     }
     if (I_activated) {
@@ -184,11 +184,9 @@ void AP_MotorsHybrid::get_state(float state[]) {
     float omega[3];
     get_angular_velocity(omega);
 
-    state[0] = roll; state[1] = pitch; state[2] = yaw - target_yaw_diff;
+    state[0] = roll; state[1] = pitch; state[2] = yaw;
     state[3] = vel[0]; state[4] = vel[1]; state[5] = vel[2];
     state[6] = omega[0]; state[7] = omega[1]; state[8] = omega[2];
-
-    wrap2PI(state[2]);
 
     // state[2] = clamp(state[2], -0.1, 0.1);
     // for (int i = 3;i < 9;i++) {
