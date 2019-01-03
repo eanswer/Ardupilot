@@ -304,7 +304,7 @@ void Copter::fast_loop()
 
 // Jie Xu
 void Copter::send_switch_info_to_motor() {
-    motors->set_radios_switch(RC_Channels::rc_channel(CH_6)->get_radio_in());
+    motors->set_radios_switch(RC_Channels::rc_channel(CH_5)->get_radio_in(), RC_Channels::rc_channel(CH_6)->get_radio_in());
 }
 
 // rc_loops - reads user input from transmitter/receiver

@@ -32,11 +32,16 @@ static float voltage_sum = 0.0f;
 
 extern const AP_HAL::HAL& hal;
 
-void AP_MotorsHybrid::set_radios_switch(uint16_t switch_CH6) {
-    if (switch_CH6 < 1300) {
-        mode = 0;
+void AP_MotorsHybrid::set_radios_switch(uint16_t switch_CH5, uint16_t switch_CH6) {
+    if (switch_CH5 < 1300) {
+        flight_mode = 0;
     } else {
-        mode = 1;
+        flight_mode = 1;
+    }
+    if (switch_CH6 < 1300) {
+        policy_mode = 0;
+    } else {
+        policy_mode = 1;
     }
 }
 
@@ -66,7 +71,8 @@ void AP_MotorsHybrid::output_to_motors() {
     // estimate voltage by _batt_voltage_filt.get() * _batt_voltage_max
 
     _copter.real_battery = average_voltage;
-    _copter.policy_mode = mode;
+    _copter.policy_mode = policy_mode;
+    _copter.flight_mode = flight_mode;
 
     if (!initialization_finished) {
         for (int i = 0;i < AC_SPACE_SIZE;i++)
@@ -117,7 +123,7 @@ void AP_MotorsHybrid::output_to_motors() {
                             motor_out[i] = 1100;
                     } else {
                         for (i=0; i<AC_SPACE_SIZE; i++) {
-                            float pwm = thrust2pwm_dji_set(_thrust_rpyt_out_NN[i], average_voltage);
+                            float pwm = thrust2pwm_castle_dji_set(_thrust_rpyt_out_NN[i], average_voltage);
                             pwm = clamp(pwm, (float)1100.0f, (float)1900.0f);
                             motor_out[i] = (int16_t)pwm;
                         }
@@ -137,7 +143,7 @@ void AP_MotorsHybrid::output_to_motors() {
     }
     
     // send output to each motor
-    if (mode == 0) {
+    if (policy_mode == 0) {
         for (int i = 0; i < AC_SPACE_SIZE; i++) {
             rc_write(i, _motor_out_NN[i]);
             // float output = _motor_out_pid[i] * 0.2 + _motor_out_NN[i] * 0.8;
@@ -314,21 +320,40 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
         const float roll_ctrl = (float)_copter.get_channel_roll_control_in();
         const float yaw_ctrl = (float)_copter.get_channel_yaw_control_in();
 
-        target_vx = 0.0f;
-        if (pitch_ctrl > 500.0f) {
-            target_vx = remap(pitch_ctrl, 500.0, 4500.0f, 0.0f, min_vx);
-        } else if (pitch_ctrl < -500.0f) {
-            target_vx = remap(pitch_ctrl, -500.0f, -4500.0f, 0.0f, max_vx);
+        if (flight_mode == 0) {
+            target_vx = 0.0f;
+            if (pitch_ctrl > 500.0f) {
+                target_vx = remap(pitch_ctrl, 500.0, 4500.0f, 0.0f, copter_min_vx);
+            } else if (pitch_ctrl < -500.0f) {
+                target_vx = remap(pitch_ctrl, -500.0f, -4500.0f, 0.0f, copter_max_vx);
+            } else {
+                target_vx = 0.0f;
+            }
+            target_vy = 0.0f;
+            if (roll_ctrl > 500.0f) {
+                target_vy = remap(roll_ctrl, 500.0, 4500.0f, 0.0f, max_vy);
+            } else if (roll_ctrl < -500.0f) {
+                target_vy = remap(roll_ctrl, -500.0f, -4500.0f, 0.0f, min_vy);
+            } else {
+                target_vy = 0.0f;
+            }
         } else {
             target_vx = 0.0f;
-        }
-        target_vy = 0.0f;
-        if (roll_ctrl > 500.0f) {
-            target_vy = remap(roll_ctrl, 500.0, 4500.0f, 0.0f, max_vy);
-        } else if (roll_ctrl < -500.0f) {
-            target_vy = remap(roll_ctrl, -500.0f, -4500.0f, 0.0f, min_vy);
-        } else {
+            if (pitch_ctrl > 500.0f) {
+                target_vx = remap(pitch_ctrl, 500.0, 4500.0f, 0.0f, gliding_min_vx);
+            } else if (pitch_ctrl < -500.0f) {
+                target_vx = remap(pitch_ctrl, -500.0f, -4500.0f, 0.0f, gliding_max_vx);
+            } else {
+                target_vx = 0.0f;
+            }
             target_vy = 0.0f;
+            // if (roll_ctrl > 500.0f) {
+            //     target_vy = remap(roll_ctrl, 500.0, 4500.0f, 0.0f, max_vy);
+            // } else if (roll_ctrl < -500.0f) {
+            //     target_vy = remap(roll_ctrl, -500.0f, -4500.0f, 0.0f, min_vy);
+            // } else {
+            //     target_vy = 0.0f;
+            // }
         }
         target_vz = 0.0f;
         if (thr_ctrl < 400.0f) {

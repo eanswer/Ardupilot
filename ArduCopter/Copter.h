@@ -220,7 +220,7 @@ public:
     float real_battery, yaw_0;
     float rotation_matrix_diff;
     float target_roll_diff, target_pitch_diff, target_yaw_diff;
-    uint16_t policy_mode;
+    uint16_t policy_mode, flight_mode;
     int   spool_mode;
     int16_t thr_ctrl_in;
 

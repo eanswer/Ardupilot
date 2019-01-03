@@ -25,7 +25,7 @@ public:
         : AP_MotorsMatrix(loop_rate, speed_hz), _copter(cop), I_dt(0.0025) { }
     virtual ~AP_MotorsHybrid() {}
 
-    void                set_radios_switch(uint16_t switch_CH6);
+    void                set_radios_switch(uint16_t switch_CH5, uint16_t switch_CH6);
 
     // setup_motors - configures the motors for rotors.
     virtual void        setup_motors(motor_frame_class frame_class, motor_frame_type frame_type);
@@ -51,8 +51,9 @@ private:
     Copter&       _copter;
 
     // mode
-    uint16_t mode; // 0 for our own policy, 1 for althold mode
-
+    uint16_t policy_mode; // 0 for our own policy, 1 for althold mode
+    uint16_t flight_mode; // 0 for copter mode, 1 for gliding mode
+    
     // target
     float target_vx, target_vy, target_vz;
     float target_yaw_diff;
