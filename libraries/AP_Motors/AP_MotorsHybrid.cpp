@@ -297,7 +297,7 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
                 yaw_count ++;
             }
         }
-        if (yaw_count == 4000) {
+        if (yaw_count == 6000) {
             yaw_0 = (float)(initial_yaw_sum / yaw_count);
             initialization_finished = true;
             target_yaw_diff = 0.0;
