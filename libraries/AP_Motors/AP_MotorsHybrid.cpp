@@ -172,6 +172,8 @@ void AP_MotorsHybrid::get_observation_vector(float ob[]) {
 
     float error[4];
     error[0] = target_vx - state[3]; error[1] = target_vy - state[4]; error[2] = target_vz - state[5]; error[3] = target_yaw_diff - state[2];
+    wrap2PI(error[3]);
+    
     if (target_vz <= 0.05) {
         I_activated = true;
     }
