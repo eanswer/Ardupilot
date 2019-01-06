@@ -53,6 +53,7 @@ private:
     // mode
     uint16_t policy_mode; // 0 for our own policy, 1 for althold mode
     uint16_t flight_mode; // 0 for copter mode, 1 for gliding mode
+    bool     urgent_shut_down;
     
     // target
     float target_vx, target_vy, target_vz;

@@ -33,6 +33,11 @@ static float voltage_sum = 0.0f;
 extern const AP_HAL::HAL& hal;
 
 void AP_MotorsHybrid::set_radios_switch(uint16_t switch_CH5, uint16_t switch_CH6) {
+    if (switch_CH5 > 1800 && switch_CH6 > 1800) {
+        urgent_shut_down = true;
+    } else {
+        urgent_shut_down = false;
+    }
     if (switch_CH5 < 1300) {
         flight_mode = 0;
     } else {
@@ -143,15 +148,19 @@ void AP_MotorsHybrid::output_to_motors() {
     }
     
     // send output to each motor
-    if (policy_mode == 0) {
-        for (int i = 0; i < AC_SPACE_SIZE; i++) {
-            rc_write(i, _motor_out_NN[i]);
-            // float output = _motor_out_pid[i] * 0.2 + _motor_out_NN[i] * 0.8;
-            // rc_write(i, (int16_t)output);
+    if (urgent_shut_down == 1) {
+        for (int i = 0;i < AC_SPACE_SIZE; i++) {
+            rc_write(i, 1000);
         }
     } else {
-        for (int i = 0;i < AC_SPACE_SIZE; i++) {
-            rc_write(i, _motor_out_pid[i]);
+        if (policy_mode == 0) {
+            for (int i = 0; i < AC_SPACE_SIZE; i++) {
+                rc_write(i, _motor_out_NN[i]);
+            }
+        } else {
+            for (int i = 0;i < AC_SPACE_SIZE; i++) {
+                rc_write(i, _motor_out_pid[i]);
+            }
         }
     }
     _copter.spool_mode = (int)_spool_mode;
@@ -193,11 +202,6 @@ void AP_MotorsHybrid::get_state(float state[]) {
     state[0] = roll; state[1] = pitch; state[2] = yaw;
     state[3] = vel[0]; state[4] = vel[1]; state[5] = vel[2];
     state[6] = omega[0]; state[7] = omega[1]; state[8] = omega[2];
-
-    // state[2] = clamp(state[2], -0.1, 0.1);
-    // for (int i = 3;i < 9;i++) {
-    //     state[i] = clamp(state[i], -1.5, 1.5);
-    // }
 }
 
 void AP_MotorsHybrid::collect_rpy() {
