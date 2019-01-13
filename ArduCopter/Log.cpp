@@ -488,6 +488,7 @@ struct PACKED log_var {
     float   yaw_0;
     uint16_t flight_mode;
     uint16_t policy_mode;
+    uint16_t urgent_shut_down;
     int     spool_mode;
     float   target_yaw_diff;
 };
@@ -501,6 +502,7 @@ void Copter::Log_Write_Var()
         yaw_0           : yaw_0,
         flight_mode     : flight_mode,
         policy_mode     : policy_mode,
+        urgent_shut_down: urgent_shut_down,
         spool_mode      : spool_mode,
         target_yaw_diff : target_yaw_diff
     };
@@ -1057,7 +1059,7 @@ const struct LogStructure Copter::log_structure[] = {
     { LOG_PID_OUTPUT_MSG, sizeof(log_pid_output),
       "PIDO",  "Qhhhhh", "TimeUS,OUT0,OUT1,OUT2,OUT3,OUT4"},
     { LOG_VAR_MSG, sizeof(log_var),
-      "VAR",   "QffHHif", "TimeUS,Volt,Yaw0,fmod,pmod,spool,yawdiff"},
+      "VAR",   "QffHHHif", "TimeUS,Volt,Yaw0,fmod,pmod,shut,spool,yawdiff"},
 };
 
 #if CLI_ENABLED == ENABLED

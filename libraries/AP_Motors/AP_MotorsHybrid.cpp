@@ -61,7 +61,7 @@ void AP_MotorsHybrid::setup_motors(motor_frame_class frame_class, motor_frame_ty
     // }
     
     // add front motor
-    add_motor_raw(AP_MOTORS_MOT_1 + 4, 0.0f, 0.0f, 0.0f, 4);
+    add_motor_raw(AP_MOTORS_MOT_1 + 4, 0.0f, 0.0f, 0.0f, 5);
 }
 
 void AP_MotorsHybrid::output_to_motors() {
@@ -132,7 +132,7 @@ void AP_MotorsHybrid::output_to_motors() {
                     } else {
                         for (i=0; i<AC_SPACE_SIZE; i++) {
                             float pwm = thrust2pwm_castle_dji_set(_thrust_rpyt_out_NN[i], average_voltage);
-                            pwm = clamp(pwm, (float)1100.0f, (float)1950.0f);
+                            pwm = clamp(pwm, (float)1100.0f, (float)1900.0f);
                             motor_out[i] = (int16_t)pwm;
                         }
                     }
@@ -151,15 +151,18 @@ void AP_MotorsHybrid::output_to_motors() {
     }
     
     // send output to each motor
-    if (urgent_shut_down == 1) {
+    if (urgent_shut_down) {
+        _copter.urgent_shut_down = 1;
         for (int i = 0;i < AC_SPACE_SIZE; i++) {
             rc_write(i, 1000);
         }
     } else {
+        _copter.urgent_shut_down = 0;
         if (policy_mode == 0) {
-            for (int i = 0; i < AC_SPACE_SIZE; i++) {
-                rc_write(i, _motor_out_NN[i]);
+            for (int i = 1; i < AC_SPACE_SIZE; i++) {
+                rc_write(i - 1, _motor_out_NN[i]);
             }
+            rc_write(4, _motor_out_NN[0]);
         } else {
             for (int i = 0;i < 4; i++) {
                 rc_write(i, _motor_out_pid[i]);
@@ -358,13 +361,13 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
                 target_vx = 0.0f;
             }
             target_vy = 0.0f;
-            // if (roll_ctrl > 500.0f) {
-            //     target_vy = remap(roll_ctrl, 500.0, 4500.0f, 0.0f, max_vy);
-            // } else if (roll_ctrl < -500.0f) {
-            //     target_vy = remap(roll_ctrl, -500.0f, -4500.0f, 0.0f, min_vy);
-            // } else {
-            //     target_vy = 0.0f;
-            // }
+            if (roll_ctrl > 500.0f) {
+                target_vy = remap(roll_ctrl, 500.0, 4500.0f, 0.0f, max_vy);
+            } else if (roll_ctrl < -500.0f) {
+                target_vy = remap(roll_ctrl, -500.0f, -4500.0f, 0.0f, min_vy);
+            } else {
+                target_vy = 0.0f;
+            }
         }
         target_vz = 0.0f;
         if (thr_ctrl < 400.0f) {
@@ -377,9 +380,9 @@ void AP_MotorsHybrid::output_armed_stabilizing() {
 
         float target_yaw_vel = 0.0f;
         if (yaw_ctrl < -500.0f) {
-            target_yaw_vel = remap(yaw_ctrl, -4500.0f, -500.0f, -0.5f, 0.0f);
+            target_yaw_vel = remap(yaw_ctrl, -4500.0f, -500.0f, -1.0f, 0.0f);
         } else if (yaw_ctrl > 500.0f) {
-            target_yaw_vel = remap(yaw_ctrl, 500.0f, 4500.0f, 0.0f, 0.5f);
+            target_yaw_vel = remap(yaw_ctrl, 500.0f, 4500.0f, 0.0f, 1.0f);
         } else {
             target_yaw_vel = 0.0;
         }
