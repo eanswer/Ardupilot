@@ -59,9 +59,6 @@ void AP_MotorsHybrid::setup_motors(motor_frame_class frame_class, motor_frame_ty
     // for (int i = 0; i < AC_SPACE_SIZE; ++i) {
     //     add_motor_raw(AP_MOTORS_MOT_1 + i, 0.0f, 0.0f, 0.0f, i + 1);
     // }
-    
-    // add front motor
-    add_motor_raw(AP_MOTORS_MOT_1 + 4, 0.0f, 0.0f, 0.0f, 5);
 }
 
 void AP_MotorsHybrid::output_to_motors() {
@@ -159,15 +156,17 @@ void AP_MotorsHybrid::output_to_motors() {
     } else {
         _copter.urgent_shut_down = 0;
         if (policy_mode == 0) {
-            for (int i = 1; i < AC_SPACE_SIZE; i++) {
-                rc_write(i - 1, _motor_out_NN[i]);
+            for (int i = 0; i < AC_SPACE_SIZE; i++) {
+                rc_write(i, _motor_out_NN[i]);
             }
-            rc_write(4, _motor_out_NN[0]);
         } else {
-            for (int i = 0;i < 4; i++) {
-                rc_write(i, _motor_out_pid[i]);
-            }
-            rc_write(4, 1000);
+            // for (int i = 0;i < 4; i++) {
+            //     rc_write(i, _motor_out_pid[i]);
+            // }
+            rc_write(0, _motor_out_pid[2]);
+            rc_write(1, _motor_out_pid[3]);
+            rc_write(2, _motor_out_pid[1]);
+            rc_write(3, _motor_out_pid[0]);
         }
     }
 
